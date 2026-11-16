@@ -1,0 +1,7 @@
+{
+  "name": "standup-recap",
+  "version": "0.1.0",
+  "description": "Records what Claude Code does while it works, then plays it back as an animated, step-by-step recap you can present at standup.",
+  "author": { "name": "JeVaughn" },
+  "keywords": ["standup", "recap", "animation", "presentation", "team"]
+}

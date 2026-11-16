@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Standup Recap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080c; --bg2:#0d1017; --panel:#11151e; --line:#1e2533; --line2:#2a3345;
+  --ink:#eef1f7; --ink2:#a3adc2; --ink3:#5f6a80;
+  --plan:#a78bfa; --explore:#38bdf8; --edit:#fbbf24; --run:#22d3ee; --test:#4ade80;
+  --fix:#fb7185; --decide:#f472b6; --ship:#34d399;
+  --add:#4ade80; --del:#fb7185;
+  --accent:var(--plan);
+  --sans:"Inter Tight",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+body{position:relative}
+
+/* 16:9 stage scaled to fit any screen */
+#stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center;transform:translate(-50%,-50%);overflow:hidden;background:
+  radial-gradient(1200px 700px at 85% -10%, color-mix(in oklab,var(--accent) 16%,transparent), transparent 60%),
+  radial-gradient(900px 600px at -10% 110%, color-mix(in oklab,var(--accent) 10%,transparent), transparent 60%),
+  var(--bg);transition:background .8s var(--ease)}
+#stage::before{content:"";position:absolute;inset:0;background-image:
+  linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:64px 64px;opacity:.25;mask-image:radial-gradient(ellipse at 60% 40%,#000 20%,transparent 75%)}
+.paused *{animation-play-state:paused!important}
+
+/* top bar */
+#top{position:absolute;left:72px;right:72px;top:44px;display:flex;align-items:center;gap:18px;font-size:17px;color:var(--ink2);z-index:3}
+#top .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent);transition:background .6s}
+#top b{color:var(--ink);font-weight:600}
+#top .sp{flex:1}
+#top .meta{font-family:var(--mono);font-size:14px;color:var(--ink3)}
+
+/* scene */
+#scene{position:absolute;inset:110px 72px 150px 72px;display:grid;grid-template-columns:560px 1fr;gap:64px;align-items:center}
+#scene.full{grid-template-columns:1fr}
+.left{display:flex;flex-direction:column;gap:22px}
+.kind{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;padding:8px 14px 8px 10px;border-radius:999px;
+  border:1px solid color-mix(in oklab,var(--accent) 45%,transparent);background:color-mix(in oklab,var(--accent) 12%,transparent);
+  color:var(--accent);font-family:var(--mono);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.kind svg{width:18px;height:18px}
+.stepno{font-family:var(--mono);color:var(--ink3);font-size:15px;letter-spacing:.05em}
+h1{font-size:58px;line-height:1.04;font-weight:700;letter-spacing:-.025em}
+h1 .w,.narr .w{display:inline-block;opacity:0;transform:translateY(.45em);filter:blur(6px);animation:word .7s var(--ease) forwards}
+.narr{font-size:25px;line-height:1.5;color:var(--ink2);font-weight:400}
+.narr .w{animation-duration:.5s}
+.narr em{font-style:normal;color:var(--ink);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--mono);font-size:13px;padding:6px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--line2);color:var(--ink2);opacity:0;animation:pop .5s var(--ease) forwards}
+
+@keyframes word{to{opacity:1;transform:none;filter:none}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes fadein{to{opacity:1}}
+
+/* window chrome for visual panels */
+.win{position:relative;border-radius:18px;background:linear-gradient(180deg,#121722,#0c1018);border:1px solid var(--line2);
+  box-shadow:0 40px 120px -30px #000,0 0 0 1px #ffffff06 inset,0 0 80px -40px var(--accent);overflow:hidden;opacity:0;animation:rise .8s var(--ease) .15s forwards}
+.win .bar{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:14px;color:var(--ink3)}
+.win .bar i{width:11px;height:11px;border-radius:50%;background:#2a3142}
+.win .bar .tab{margin-left:14px;padding:5px 12px;border-radius:7px;background:#ffffff08;color:var(--ink2)}
+.win .body{padding:22px 0;font-family:var(--mono);font-size:17px;line-height:1.75}
+
+/* EDIT: diff */
+.dl{display:flex;padding:0 24px;opacity:0;animation:fadein .01s linear forwards;white-space:pre;position:relative}
+.dl .g{width:44px;color:var(--ink3);flex:none;text-align:right;padding-right:18px;user-select:none}
+.dl .s{width:18px;flex:none;color:var(--ink3)}
+.dl .c{overflow:hidden;text-overflow:ellipsis}
+.dl.add{background:linear-gradient(90deg,color-mix(in oklab,var(--add) 16%,transparent),transparent 80%)}
+.dl.add .s,.dl.add .c{color:#bff5cf}
+.dl.add::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--add)}
+.dl.del{background:linear-gradient(90deg,color-mix(in oklab,var(--del) 14%,transparent),transparent 80%)}
+.dl.del .s,.dl.del .c{color:#ffc1cc}
+.dl.del::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--del)}
+.dl.add{animation:slidein .5s var(--ease) forwards}
+.dl.del .c{background:linear-gradient(currentColor,currentColor) no-repeat 0 55%/0 1.5px;animation:strike .6s var(--ease) forwards}
+.dl.del{animation:fadein .01s linear forwards}
+@keyframes slidein{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes strike{to{background-size:100% 1.5px}}
+.caret{display:inline-block;width:9px;height:1.1em;vertical-align:-3px;background:var(--accent);margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.stat{position:absolute;right:18px;top:12px;font-family:var(--mono);font-size:14px;display:flex;gap:10px}
+.stat .a{color:var(--add)} .stat .r{color:var(--del)}
+
+/* EXPLORE: file tree scan */
+.tree .row{display:flex;align-items:center;gap:12px;padding:5px 24px;color:var(--ink3);opacity:0;animation:fadein .3s forwards;position:relative}
+.tree .row svg{width:17px;height:17px;flex:none;opacity:.7}
+.tree .row.hit{animation:fadein .3s forwards,hit .7s var(--ease) forwards}
+.tree .row.hit::after{content:"✓ relevant";margin-left:auto;font-size:13px;color:var(--accent);opacity:0;animation:fadein .4s forwards;animation-delay:var(--hd,0s)}
+@keyframes hit{to{color:var(--ink);background:color-mix(in oklab,var(--accent) 14%,transparent)}}
+.scan{position:absolute;left:0;right:0;height:38px;top:62px;background:linear-gradient(180deg,transparent,color-mix(in oklab,var(--accent) 22%,transparent),transparent);
+  animation:scan var(--dur,3s) var(--ease) .5s forwards;opacity:0;pointer-events:none}
+@keyframes scan{0%{opacity:0;transform:translateY(0)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translateY(var(--dist,300px))}}
+
+/* RUN/TEST: terminal */
+.term .body{padding:22px 26px;font-size:17px}
+.term .prompt{color:var(--accent)}
+.term .cmd{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;width:0;animation:type var(--t,1.5s) steps(var(--n,30)) .5s forwards;max-width:calc(100% - 30px)}
+@keyframes type{to{width:calc(var(--n) * 1ch)}}
+.term .o{opacity:0;animation:fadein .2s forwards;color:var(--ink2);white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.term .o.ok{color:var(--add)} .term .o.bad{color:var(--del)}
+.checks{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.check{display:flex;align-items:center;gap:14px;font-size:20px;opacity:0;animation:pop .5s var(--ease) forwards}
+.check .b{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in oklab,var(--add) 18%,transparent);border:1px solid color-mix(in oklab,var(--add) 50%,transparent)}
+.check.bad .b{background:color-mix(in oklab,var(--del) 18%,transparent);border-color:color-mix(in oklab,var(--del) 50%,transparent)}
+.check svg{width:18px;height:18px}
+.check path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s var(--ease) forwards;animation-delay:inherit}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* PLAN / generic bullets */
+.cards{display:flex;flex-direction:column;gap:16px}
+.card{display:flex;gap:18px;align-items:flex-start;padding:22px 26px;border-radius:16px;background:linear-gradient(180deg,#121722,#0d1119);border:1px solid var(--line2);opacity:0;animation:rise .6s var(--ease) forwards;font-size:22px;line-height:1.4}
+.card .n{font-family:var(--mono);font-size:15px;color:var(--accent);padding-top:4px;flex:none;width:28px}
+.card.done{border-color:color-mix(in oklab,var(--accent) 40%,var(--line2))}
+
+/* DECIDE */
+.opts{display:grid;gap:16px}
+.opt{padding:22px 26px;border-radius:16px;border:1px solid var(--line2);background:#0f131c;opacity:0;animation:rise .6s var(--ease) forwards, dim .6s var(--ease) forwards;font-size:21px;position:relative}
+.opt small{display:block;font-size:16px;color:var(--ink3);margin-top:6px}
+.opt.pick{animation:rise .6s var(--ease) forwards, pick .7s var(--ease) forwards}
+.opt.pick::after{content:"chosen";position:absolute;right:20px;top:20px;font-family:var(--mono);font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);opacity:0;animation:fadein .4s forwards;animation-delay:var(--hd,0s)}
+@keyframes dim{to{opacity:.4}}
+@keyframes pick{to{border-color:var(--accent);background:color-mix(in oklab,var(--accent) 12%,#0f131c);box-shadow:0 0 60px -20px var(--accent)}}
+
+/* INTRO / OUTRO */
+.hero{display:flex;flex-direction:column;gap:30px;max-width:1250px}
+.hero .eyebrow{font-family:var(--mono);color:var(--accent);font-size:17px;letter-spacing:.14em;text-transform:uppercase;opacity:0;animation:pop .6s var(--ease) forwards}
+.hero h1{font-size:96px;letter-spacing:-.035em}
+.hero .narr{font-size:30px;max-width:1100px}
+.stats{display:flex;gap:18px;margin-top:20px}
+.st{min-width:200px;padding:22px 26px;border-radius:18px;background:#0f131ccc;border:1px solid var(--line2);opacity:0;animation:rise .7s var(--ease) forwards}
+.st .v{font-size:52px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.st .l{font-family:var(--mono);font-size:14px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.st.a .v{color:var(--add)} .st.r .v{color:var(--del)}
+.outro{display:grid;grid-template-columns:1fr 1fr;gap:48px;width:100%}
+.col h3{font-family:var(--mono);font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:18px;opacity:0;animation:fadein .5s forwards}
+.col .card{font-size:21px}
+.col.blk .card .n{color:var(--fix)}
+.bigcheck{width:120px;height:120px;border-radius:32px;display:grid;place-items:center;background:color-mix(in oklab,var(--ship) 15%,transparent);border:1px solid color-mix(in oklab,var(--ship) 45%,transparent);box-shadow:0 0 120px -20px var(--ship);opacity:0;animation:pop .7s var(--ease) .1s forwards}
+.bigcheck svg{width:64px;height:64px}
+.bigcheck path{stroke-dasharray:60;stroke-dashoffset:60;animation:draw .8s var(--ease) .5s forwards}
+
+/* timeline */
+#tl{position:absolute;left:72px;right:72px;bottom:46px;z-index:3}
+#tl .track{display:flex;gap:8px}
+#tl .seg{flex:1;cursor:pointer;padding-top:14px;position:relative}
+#tl .seg .bar{height:4px;border-radius:4px;background:var(--line2);overflow:hidden}
+#tl .seg .fill{height:100%;width:0;background:var(--c,var(--ink2))}
+#tl .seg.done .fill{width:100%}
+#tl .seg.cur .fill{animation:fill var(--d,6s) linear forwards}
+#tl .seg .lbl{font-size:13px;color:var(--ink3);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .3s}
+#tl .seg.cur .lbl{color:var(--ink)}
+#tl .seg:hover .lbl{color:var(--ink2)}
+@keyframes fill{to{width:100%}}
+
+/* controls */
+#ctl{position:fixed;right:22px;top:18px;display:flex;gap:8px;z-index:10;opacity:0;transition:opacity .4s}
+body.awake #ctl,body.awake #hint{opacity:1}
+#ctl button{font:500 13px var(--sans);color:var(--ink2);background:#121722;border:1px solid var(--line2);border-radius:9px;padding:8px 12px;cursor:pointer}
+#ctl button:hover{color:var(--ink);border-color:var(--ink3)}
+#hint{position:fixed;left:22px;top:18px;font:12px var(--mono);color:var(--ink3);opacity:0;transition:opacity .4s}
+body.awake{cursor:auto} body{cursor:none}
+
+/* start screen (a click is needed before browsers allow sound) */
+#start{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:color-mix(in oklab,var(--bg) 78%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:opacity .5s var(--ease);cursor:auto}
+#start.gone{opacity:0;pointer-events:none}
+#start .box{display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;padding:0 16px}
+#start .eb{font:500 13px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--plan)}
+#start h2{font:700 clamp(30px,5vw,56px)/1.05 var(--sans);letter-spacing:-.03em;max-width:900px}
+#start .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+#start button{font:600 16px var(--sans);border-radius:14px;padding:15px 24px;cursor:pointer;border:1px solid var(--line2);background:#121722;color:var(--ink2);display:inline-flex;align-items:center;gap:10px}
+#start button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#start button:hover{transform:translateY(-1px)}
+#start small{font:12px var(--mono);color:var(--ink3)}
+/* speaking indicator */
+#wave{display:none;align-items:flex-end;gap:3px;height:16px;margin-left:6px}
+body.speaking #wave{display:inline-flex}
+#wave i{width:3px;border-radius:2px;background:var(--accent);animation:wv .9s ease-in-out infinite}
+#wave i:nth-child(2){animation-delay:.15s}#wave i:nth-child(3){animation-delay:.3s}#wave i:nth-child(4){animation-delay:.45s}
+@keyframes wv{0%,100%{height:4px}50%{height:16px}}
+.paused #wave i{animation-play-state:paused}
+#ctl select{font:500 13px var(--sans);color:var(--ink2);background:#121722;border:1px solid var(--line2);border-radius:9px;padding:7px 8px;max-width:190px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001s!important;animation-delay:0s!important}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="top"><span class="dot"></span><b id="t-title"></b><span id="wave"><i></i><i></i><i></i><i></i></span><span id="t-sub"></span><span class="sp"></span><span class="meta" id="t-meta"></span></div>
+  <div id="scene"></div>
+  <div id="tl"><div class="track" id="track"></div></div>
+</div>
+<div id="ctl">
+  <button id="b-prev" title="Previous (←)">←</button>
+  <button id="b-play" title="Play / pause (space)">Pause</button>
+  <button id="b-next" title="Next (→)">→</button>
+  <button id="b-voice" title="Narration on/off (V)">Voice: on</button>
+  <button id="b-full" title="Fullscreen (F)">Fullscreen</button>
+</div>
+<div id="hint">← → step · space pause · V voice · F fullscreen</div>
+<div id="start"><div class="box"><div class="eb" id="st-eb">Standup recap</div><h2 id="st-title"></h2>
+  <div class="row"><button class="pri" id="st-voice">▶&nbsp; Play with narration</button><button id="st-silent">Play silently</button></div>
+  <small>← → step · space pause · V voice · F fullscreen</small></div></div>
+
+<script>
+const RECAP = /*__RECAP__*/null;
+
+const DATA = RECAP || {
+  title: "Recap", summary: "No recap data was embedded.", steps: []
+};
+
+const KIND = {
+  plan:    { c:'--plan',    label:'Plan',    icon:'<path d="M4 6h16M4 12h10M4 18h7"/>' },
+  explore: { c:'--explore', label:'Explore', icon:'<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>' },
+  edit:    { c:'--edit',    label:'Edit',    icon:'<path d="M4 20h4L19 9l-4-4L4 16z"/>' },
+  run:     { c:'--run',     label:'Run',     icon:'<path d="m5 7 5 5-5 5M12 19h7"/>' },
+  test:    { c:'--test',    label:'Test',    icon:'<path d="M9 3v6L4 19a1 1 0 0 0 1 2h14a1 1 0 0 0 1-2L15 9V3M8 3h8"/>' },
+  fix:     { c:'--fix',     label:'Fix',     icon:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>' },
+  decide:  { c:'--decide',  label:'Decision',icon:'<path d="M6 3v6a6 6 0 0 0 6 6h6M15 12l3 3-3 3M6 21v-6"/>' },
+  ship:    { c:'--ship',    label:'Ship',    icon:'<path d="M5 13l4 4L19 7"/>' },
+};
+const ICON = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>';
+const DIR  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>';
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// *one or more words* in narration → highlighted
+function words(text, start, step){
+  let i = 0, on = false;
+  return esc(text).split(/(\s+)/).map(tok => {
+    if (/^\s+$/.test(tok)) return tok;
+    let w = tok, hl = on;
+    if (w.startsWith('*')) { w = w.slice(1); hl = on = true; }
+    const m = w.match(/\*([.,;:!?)]*)$/);
+    if (m) { w = w.slice(0, m.index) + m[1]; on = false; }
+    const d = (start + (i++) * step).toFixed(2);
+    return `<span class="w" style="animation-delay:${d}s">${hl ? '<em>'+w+'</em>' : w}</span>`;
+  }).join('');
+}
+const wc = t => String(t||'').split(/\s+/).filter(Boolean).length;
+
+/* ---------- scene builders: each returns {html, dur} ---------- */
+function left(s, i, n){
+  const k = KIND[s.kind] || KIND.plan;
+  const titleW = wc(s.title);
+  const narrStart = 0.5 + titleW * 0.06;
+  const files = (s.files||[]).slice(0,6);
+  const chipStart = narrStart + wc(s.narration) * 0.045 + 0.2;
+  return {
+    html: `<div class="left">
+      <div class="stepno">STEP ${String(i).padStart(2,'0')} / ${String(n).padStart(2,'0')}</div>
+      <span class="kind">${ICON(k.icon)}${esc(s.label || k.label)}</span>
+      <h1>${words(s.title, .25, .06)}</h1>
+      <p class="narr">${words(s.narration, narrStart, .045)}</p>
+      ${files.length ? `<div class="chips">${files.map((f,j)=>`<span class="chip" style="animation-delay:${(chipStart+j*.08).toFixed(2)}s">${esc(f)}</span>`).join('')}</div>` : ''}
+    </div>`,
+    dur: chipStart + 0.5
+  };
+}
+
+function vEdit(s){
+  const d = s.diff || {};
+  const lines = (d.lines||[]).slice(0,14);
+  let t = 0.9, ln = d.start || 1, html = '';
+  for (const l of lines){
+    const type = l.t === '+' ? 'add' : l.t === '-' ? 'del' : 'ctx';
+    html += `<div class="dl ${type}" style="animation-delay:${t.toFixed(2)}s"><span class="g">${type==='add'?'':ln}</span><span class="s">${l.t==='+'?'+':l.t==='-'?'−':' '}</span><span class="c">${esc(l.s)}</span></div>`;
+    if (type !== 'add') ln++;
+    t += type === 'ctx' ? 0.12 : 0.32;
+  }
+  const a = d.added ?? lines.filter(l=>l.t==='+').length, r = d.removed ?? lines.filter(l=>l.t==='-').length;
+  return { html:`<div class="win"><div class="bar"><i></i><i></i><i></i><span class="tab">${esc(d.file || (s.files||[])[0] || 'file')}</span></div>
+    <div class="stat"><span class="a">+${a}</span><span class="r">−${r}</span></div>
+    <div class="body">${html}<div class="dl" style="animation-delay:${t.toFixed(2)}s"><span class="g"></span><span class="s"></span><span class="c"><span class="caret"></span></span></div></div></div>`, dur: t + 1.2 };
+}
+
+function vExplore(s){
+  const items = (s.tree || (s.files||[]).map(f=>({p:f,hit:true}))).slice(0,12);
+  const rowH = 38.25;
+  let html = '', t = 0.4;
+  items.forEach((it,j)=>{
+    const p = typeof it === 'string' ? it : it.p;
+    const depth = (p.match(/\//g)||[]).length - (p.endsWith('/')?1:0);
+    const name = p.replace(/\/$/,'').split('/').pop() + (p.endsWith('/')?'/':'');
+    const hitDelay = 0.6 + (j/Math.max(items.length,1)) * 2.6;
+    html += `<div class="row ${it.hit?'hit':''}" style="animation-delay:${(t+j*.05).toFixed(2)}s${it.hit?`,${hitDelay.toFixed(2)}s;--hd:${hitDelay.toFixed(2)}s`:''};padding-left:${24+depth*22}px">${p.endsWith('/')?DIR:FILE}<span>${esc(name)}</span></div>`;
+  });
+  return { html:`<div class="win tree"><div class="bar"><i></i><i></i><i></i><span class="tab">${esc(s.root || 'project')}</span></div>
+    <div class="body" style="position:relative">${html}<div class="scan" style="--dist:${Math.max(items.length-1,1)*rowH}px;--dur:2.8s;top:22px"></div></div></div>`, dur: 4.2 };
+}
+
+function vTerm(s){
+  const term = s.terminal || {};
+  const cmd = String(term.cmd||'').slice(0,64);
+  const typeT = Math.max(.6, cmd.length * 0.035);
+  let t = 0.5 + typeT + 0.35, out = '';
+  for (const o of (term.output||[]).slice(0,9)){
+    const cls = /\b(pass(ed)?|ok|success|✓|done|built)\b/i.test(o) ? 'ok' : /\b(fail(ed)?|error|✗|exception)\b/i.test(o) ? 'bad' : '';
+    out += `<div class="o ${cls}" style="animation-delay:${t.toFixed(2)}s">${esc(o)}</div>`; t += 0.22;
+  }
+  let checks = '';
+  if (s.checks && s.checks.length){
+    t += 0.2;
+    checks = `<div class="checks">` + s.checks.slice(0,5).map(c=>{
+      const h = `<div class="check ${c.ok===false?'bad':''}" style="animation-delay:${t.toFixed(2)}s"><span class="b" style="color:${c.ok===false?'var(--del)':'var(--add)'}">${c.ok===false?CROSS:CHECK}</span>${esc(c.label)}</div>`;
+      t += 0.35; return h;
+    }).join('') + `</div>`;
+  }
+  return { html:`<div><div class="win term"><div class="bar"><i></i><i></i><i></i><span class="tab">${esc(term.title || 'terminal')}</span></div>
+    <div class="body"><span class="prompt">❯ </span><span class="cmd" style="--n:${cmd.length};--t:${typeT.toFixed(2)}s">${esc(cmd)}</span>${out}</div></div>${checks}</div>`, dur: t + 1 };
+}
+
+function vCards(s){
+  const b = (s.bullets||[]).slice(0,5);
+  let t = 0.6;
+  const html = b.map((x,j)=>{ const h = `<div class="card" style="animation-delay:${t.toFixed(2)}s"><span class="n">${String(j+1).padStart(2,'0')}</span><span>${esc(x)}</span></div>`; t += .45; return h; }).join('');
+  return { html:`<div class="cards">${html}</div>`, dur: t + 1 };
+}
+
+function vDecide(s){
+  const o = (s.options||[]).slice(0,3);
+  let t = 0.6;
+  const pickT = 0.6 + o.length*0.4 + 0.6;
+  const html = o.map((x,j)=>{
+    const d1 = t.toFixed(2); t += .4;
+    return `<div class="opt ${x.chosen?'pick':''}" style="animation-delay:${d1}s,${pickT.toFixed(2)}s;--hd:${pickT.toFixed(2)}s">${esc(x.label)}${x.why?`<small>${esc(x.why)}</small>`:''}</div>`;
+  }).join('');
+  return { html:`<div class="opts">${html}</div>`, dur: pickT + 1.6 };
+}
+
+function visual(s){
+  switch(s.kind){
+    case 'edit': case 'fix': return s.diff ? vEdit(s) : (s.terminal ? vTerm(s) : vCards(s));
+    case 'explore': return vExplore(s);
+    case 'run': case 'test': return s.terminal || s.checks ? vTerm(s) : vCards(s);
+    case 'decide': return s.options ? vDecide(s) : vCards(s);
+    default:
+      if (s.diff) return vEdit(s);
+      if (s.terminal || s.checks) return vTerm(s);
+      return vCards(s);
+  }
+}
+
+function intro(){
+  const st = DATA.stats || {};
+  const cells = [
+    st.files != null && {v:st.files, l:'files changed'},
+    st.added != null && {v:st.added, l:'lines added', c:'a', pre:'+'},
+    st.removed != null && {v:st.removed, l:'lines removed', c:'r', pre:'−'},
+    st.commands != null && {v:st.commands, l:'commands run'},
+    st.tests && {v:st.tests, l:'tests', raw:true},
+  ].filter(Boolean);
+  const sumStart = .4 + wc(DATA.title)*.08;
+  const statStart = sumStart + wc(DATA.summary)*.045 + .3;
+  return { full:true, accent:'--plan', dur: statStart + cells.length*.15 + 2.6,
+    html:`<div class="hero">
+      <div class="eyebrow">${esc(DATA.eyebrow || 'Standup recap' + (DATA.date ? ' · ' + DATA.date : ''))}</div>
+      <h1>${words(DATA.title, .3, .08)}</h1>
+      <p class="narr">${words(DATA.summary, sumStart, .045)}</p>
+      <div class="stats">${cells.map((c,j)=>`<div class="st ${c.c||''}" style="animation-delay:${(statStart+j*.15).toFixed(2)}s"><div class="v" ${c.raw?'':`data-count="${c.v}" data-pre="${c.pre||''}"`}>${c.raw?esc(c.v):(c.pre||'')+'0'}</div><div class="l">${c.l}</div></div>`).join('')}</div>
+    </div>`, after: () => countUp(statStart) };
+}
+
+function outro(){
+  const done = DATA.done || [], next = DATA.next || [], blk = DATA.blockers || [];
+  let t = .9;
+  const col = (title, list, cls) => list.length ? `<div class="col ${cls||''}"><h3 style="animation-delay:${(t-.2).toFixed(2)}s">${title}</h3><div class="cards">${list.slice(0,4).map((x,j)=>{const h=`<div class="card" style="animation-delay:${t.toFixed(2)}s"><span class="n">${cls==='blk'?'!':String(j+1).padStart(2,'0')}</span><span>${esc(x)}</span></div>`; t+=.3; return h;}).join('')}</div></div>` : '';
+  const a = col('Next up', next), b = col(blk.length ? 'Blockers' : 'Shipped', blk.length ? blk : done, blk.length ? 'blk' : '');
+  return { full:true, accent:'--ship', dur: t + 4,
+    html:`<div class="hero" style="max-width:none;width:100%">
+      <div style="display:flex;align-items:center;gap:34px"><div class="bigcheck" style="color:var(--ship)">${CHECK.replace('stroke-width="3"','stroke-width="2.5"')}</div>
+      <h1 style="font-size:84px">${words(DATA.closing || 'That’s the update.', .5, .08)}</h1></div>
+      <div class="outro">${a}${b}</div></div>` };
+}
+
+function countUp(delay){
+  setTimeout(() => {
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const target = +el.dataset.count, pre = el.dataset.pre || ''; const t0 = performance.now(), D = 1100;
+      const tick = now => { if (!el.isConnected) return; const p = Math.min(1,(now-t0)/D), e = 1-Math.pow(1-p,3);
+        el.textContent = pre + Math.round(target*e).toLocaleString(); if (p<1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    });
+  }, delay*1000 + 300);
+}
+
+/* ---------- build scene list ---------- */
+const steps = DATA.steps || [];
+const SCENES = [{ type:'intro', label:'Overview', c:'--plan' }]
+  .concat(steps.map((s,i)=>({ type:'step', s, i:i+1, label:s.title, c:(KIND[s.kind]||KIND.plan).c })))
+  .concat([{ type:'outro', label:'Wrap-up', c:'--ship' }]);
+
+function render(sc){
+  if (sc.type === 'intro') return intro();
+  if (sc.type === 'outro') return outro();
+  const L = left(sc.s, sc.i, steps.length), V = visual(sc.s);
+  const read = 2.2 + wc(sc.s.narration) * 0.28; // time for people to actually read it
+  return { accent: sc.c, html: L.html + `<div class="right">${V.html}</div>`, dur: Math.max(L.dur, V.dur, read) + 1.4 };
+}
+
+const $ = id => document.getElementById(id);
+/* ---------- narration ---------- */
+const plain = t => String(t ?? '').replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+const end = t => /[.!?]$/.test(t) ? t : t + '.';
+function script(sc){
+  const vo = DATA.voiceover || {};
+  if (sc.type === 'intro') return vo.intro || `${end(plain(DATA.title))} ${plain(DATA.summary)}`;
+  if (sc.type === 'outro') {
+    if (vo.outro) return vo.outro;
+    const parts = [];
+    if ((DATA.blockers||[]).length) parts.push('Blockers: ' + end(DATA.blockers.map(plain).join('. ')));
+    if ((DATA.next||[]).length) parts.push('Next up: ' + end(DATA.next.map(plain).join(', and ')));
+    parts.push(plain(DATA.closing || 'That’s the update.'));
+    return parts.join(' ');
+  }
+  return sc.s.voiceover || `${end(plain(sc.s.title))} ${plain(sc.s.narration)}`;
+}
+const AUDIO = DATA.audio || {};              // optional: { "<scene index>": "data:audio/mpeg;base64,..." } from build.js
+const HAS_AUDIO = Object.keys(AUDIO).length > 0;
+const estimate = t => wc(t) / 2.5 + 0.8;     // ~150 words per minute
+
+const V = { on: false, token: 0, el: null };
+
+
+function stopVoice(){
+  V.token++;
+  if (V.el) { V.el.pause(); V.el.src = ''; V.el = null; }
+  document.body.classList.remove('speaking');
+}
+// speak scene i; calls done() exactly once when finished (or right away if it can't speak)
+function speak(i, done){
+  stopVoice();
+  const tok = V.token;
+  let fired = false;
+  const finish = () => { if (fired || tok !== V.token) return; fired = true; document.body.classList.remove('speaking'); done(); };
+  if (!V.on || !AUDIO[i]) return finish();
+  const el = V.el = new Audio(AUDIO[i]);
+  el.onended = finish; el.onerror = finish;
+  el.onplaying = () => document.body.classList.add('speaking');
+  el.play().catch(finish);
+}
+function pauseVoice(){ if (V.el) V.el.pause(); }
+function resumeVoice(){ if (V.el) V.el.play().catch(()=>{}); }
+
+/* ---------- player ---------- */
+const stage = $('stage'), scene = $('scene'), track = $('track');
+let idx = 0, playing = true, timer = null, remain = 0, startedAt = 0, animDone = false, voiceDone = true;
+
+$('t-title').textContent = DATA.title || 'Standup recap';
+$('t-sub').textContent = DATA.author ? '· ' + DATA.author : '';
+$('t-meta').textContent = [DATA.repo, DATA.branch, DATA.date].filter(Boolean).join('  ·  ');
+document.title = (DATA.title || 'Standup recap') + ' — recap';
+
+track.innerHTML = SCENES.map((sc,i)=>`<div class="seg" data-i="${i}" style="--c:var(${sc.c})"><div class="bar"><div class="fill"></div></div><div class="lbl">${esc(sc.label)}</div></div>`).join('');
+track.addEventListener('click', e => { const s = e.target.closest('.seg'); if (s) go(+s.dataset.i); });
+
+function maybeAdvance(){ if (playing && animDone && voiceDone && idx < SCENES.length - 1) go(idx + 1); }
+
+function go(i){
+  idx = Math.max(0, Math.min(SCENES.length-1, i));
+  const r = render(SCENES[idx]);
+  stage.style.setProperty('--accent', `var(${r.accent || SCENES[idx].c})`);
+  scene.className = r.full ? 'full' : '';
+  scene.innerHTML = r.html;
+  if (!playing) stage.classList.add('paused');
+  [...track.children].forEach((seg,j)=>{
+    seg.classList.toggle('done', j < idx); seg.classList.toggle('cur', j === idx);
+    const f = seg.querySelector('.fill'); f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
+  });
+  const spoken = V.on ? estimate(script(SCENES[idx])) + 1.2 : 0;
+  track.children[idx].style.setProperty('--d', Math.max(r.dur, spoken) + 's');
+  r.after && r.after();
+  clearTimeout(timer); animDone = false; remain = r.dur * 1000;
+  voiceDone = !V.on;
+  if (V.on) speak(idx, () => setTimeout(() => { voiceDone = true; maybeAdvance(); }, 700));
+  else stopVoice();
+  if (playing) arm(); else pauseVoice();
+}
+function arm(){ startedAt = performance.now(); clearTimeout(timer); timer = setTimeout(() => { animDone = true; maybeAdvance(); }, Math.max(0, remain)); }
+function setPlay(p){
+  playing = p; stage.classList.toggle('paused', !p); $('b-play').textContent = p ? 'Pause' : 'Play';
+  if (p) { if (!animDone) arm(); resumeVoice(); maybeAdvance(); }
+  else { clearTimeout(timer); remain -= performance.now() - startedAt; pauseVoice(); }
+}
+function setVoice(on){
+  V.on = on && HAS_AUDIO;
+  $('b-voice').textContent = 'Voice: ' + (V.on ? 'on' : 'off');
+  if (V.on) { voiceDone = false; speak(idx, () => setTimeout(() => { voiceDone = true; maybeAdvance(); }, 700)); if (!playing) pauseVoice(); }
+  else { stopVoice(); voiceDone = true; maybeAdvance(); }
+}
+$('b-prev').onclick = () => go(idx-1);
+$('b-next').onclick = () => go(idx+1);
+$('b-play').onclick = () => setPlay(!playing);
+$('b-voice').onclick = () => setVoice(!V.on);
+$('b-full').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (!$('start').classList.contains('gone')) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); begin(true); } return; }
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') go(idx+1);
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(idx-1);
+  else if (e.key === ' ') { e.preventDefault(); setPlay(!playing); }
+  else if (e.key.toLowerCase() === 'v') setVoice(!V.on);
+  else if (e.key.toLowerCase() === 'f') $('b-full').click();
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(SCENES.length-1);
+});
+
+// start screen: browsers only allow sound after a click, so the show begins here
+$('st-title').textContent = DATA.title || 'Standup recap';
+$('st-eb').textContent = 'Standup recap' + (DATA.date ? ' · ' + DATA.date : '');
+if (!HAS_AUDIO) {
+  $('st-voice').hidden = true; $('st-silent').className = 'pri'; $('st-silent').textContent = '▶  Play'; $('b-voice').hidden = true;
+  document.querySelectorAll('#hint, #start small').forEach(el => el.textContent = el.textContent.replace(' · V voice', ''));
+}
+function begin(withVoice){
+  $('start').classList.add('gone');
+  V.on = withVoice && HAS_AUDIO;
+  $('b-voice').textContent = 'Voice: ' + (V.on ? 'on' : 'off');
+  playing = true; stage.classList.remove('paused'); $('b-play').textContent = 'Pause';
+  go(idx);
+}
+$('st-voice').onclick = () => begin(true);
+$('st-silent').onclick = () => begin(false);
+
+let idleT; function wake(){ document.body.classList.add('awake'); clearTimeout(idleT); idleT = setTimeout(()=>document.body.classList.remove('awake'), 2200); }
+addEventListener('mousemove', wake); wake();
+
+function fit(){ const s = Math.min(innerWidth/1600, innerHeight/900); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+addEventListener('resize', fit); fit();
+
+// ?step=N jumps to a scene · ?paused freezes · ?autoplay skips the start screen (silent) · ?voice autostarts narrated
+const q = new URLSearchParams(location.search);
+idx = +(q.get('step') || 0);
+$('b-voice').textContent = 'Voice: off';
+if (q.has('paused') || q.has('autoplay')) { $('start').classList.add('gone'); if (q.has('paused')) setPlay(false); go(idx); }
+else if (q.has('voice')) { begin(true); }
+else { go(idx); setPlay(false); }   // first frame sits behind the start screen
+</script>
+</body>
+</html>

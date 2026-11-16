@@ -1,0 +1,181 @@
+{
+ "title": "Faster file previews",
+ "summary": "Large PDFs now *stream* instead of waiting for the full download, so the first page shows in under a second.",
+ "date": "Mon Nov 16",
+ "author": "JeVaughn + Claude",
+ "repo": "bucketdesk",
+ "branch": "feat/stream-previews",
+ "stats": {
+  "files": 6,
+  "added": 214,
+  "removed": 58,
+  "commands": 11,
+  "tests": "48 / 48"
+ },
+ "steps": [
+  {
+   "kind": "plan",
+   "title": "Open big PDFs without the wait",
+   "narration": "A 90MB contract took *8 seconds* to preview because we downloaded the whole file first. Goal: show page one immediately.",
+   "bullets": [
+    "Find where previews fetch the file",
+    "Swap full download for range requests",
+    "Keep a fallback for servers without range support"
+   ],
+   "voiceover": "So the problem. A ninety megabyte contract took about eight seconds to preview, because we downloaded the entire file before showing anything. The goal was to show page one right away."
+  },
+  {
+   "kind": "explore",
+   "title": "Traced the slow path",
+   "narration": "Every preview type funnels through one helper that calls *fetchAll*. PDFs were the only type that didn't need it.",
+   "root": "src",
+   "tree": [
+    {
+     "p": "src/"
+    },
+    {
+     "p": "src/preview/"
+    },
+    {
+     "p": "src/preview/image.ts"
+    },
+    {
+     "p": "src/preview/pdf.ts",
+     "hit": true
+    },
+    {
+     "p": "src/preview/video.ts"
+    },
+    {
+     "p": "src/lib/"
+    },
+    {
+     "p": "src/lib/s3.ts",
+     "hit": true
+    },
+    {
+     "p": "src/lib/cache.ts"
+    },
+    {
+     "p": "src/routes/files.ts"
+    }
+   ],
+   "voiceover": "I traced the slow path first. Every preview type goes through one helper that downloads the whole file, and PDFs were the one type that didn't actually need that."
+  },
+  {
+   "kind": "edit",
+   "title": "Stream the first page",
+   "narration": "Replaced the full download with a *ranged read* of the first chunk, then hand that straight to the renderer.",
+   "files": [
+    "src/preview/pdf.ts",
+    "src/lib/s3.ts"
+   ],
+   "diff": {
+    "file": "src/preview/pdf.ts",
+    "start": 42,
+    "added": 31,
+    "removed": 9,
+    "lines": [
+     {
+      "t": " ",
+      "s": "export async function renderPdf(doc: FileRef) {"
+     },
+     {
+      "t": "-",
+      "s": "  const buf = await fetchAll(doc.url)"
+     },
+     {
+      "t": "-",
+      "s": "  const pdf = await loadPdf(buf)"
+     },
+     {
+      "t": "+",
+      "s": "  const stream = openRange(doc.url, 0, CHUNK)"
+     },
+     {
+      "t": "+",
+      "s": "  const pdf = await loadPdf(stream, { lazy: true })"
+     },
+     {
+      "t": "+",
+      "s": "  await pdf.renderPage(1)"
+     },
+     {
+      "t": " ",
+      "s": "  return pdf"
+     },
+     {
+      "t": " ",
+      "s": "}"
+     }
+    ]
+   },
+   "voiceover": "The fix itself is small. Instead of the full download, we read just the first chunk of the file with a range request, and hand it straight to the renderer."
+  },
+  {
+   "kind": "decide",
+   "title": "Range requests over thumbnails",
+   "narration": "Pre-rendering would be faster still, but needs a *background worker* we don't have yet.",
+   "options": [
+    {
+     "label": "HTTP range requests",
+     "why": "Works with the S3 setup we already have",
+     "chosen": true
+    },
+    {
+     "label": "Pre-render thumbnails on upload",
+     "why": "Needs a queue + worker"
+    }
+   ],
+   "voiceover": "We did consider pre-rendering thumbnails on upload. It would be even faster, but it needs a background worker we don't have yet, so range requests won."
+  },
+  {
+   "kind": "test",
+   "title": "Tests green, 90MB file in 0.7s",
+   "narration": "Added cases for the *416 fallback* and checked a real 90MB contract by hand.",
+   "terminal": {
+    "cmd": "pnpm test preview",
+    "output": [
+     "\u2713 pdf streams first page (112ms)",
+     "\u2713 falls back when range unsupported",
+     "\u2713 image previews unchanged",
+     "",
+     "48 passed, 0 failed"
+    ]
+   },
+   "checks": [
+    {
+     "label": "Unit tests \u2014 48 passed",
+     "ok": true
+    },
+    {
+     "label": "90MB PDF: 8.1s \u2192 0.7s",
+     "ok": true
+    }
+   ],
+   "voiceover": "Tests are green. All forty-eight pass, including new ones for servers that don't support range requests. And that ninety megabyte file now opens in about point seven seconds."
+  },
+  {
+   "kind": "ship",
+   "title": "PR up for review",
+   "narration": "Opened the PR with before/after timings. Preview env is deployed for anyone who wants to try it.",
+   "bullets": [
+    "PR #142: stream PDF previews",
+    "Deployed to preview env"
+   ],
+   "voiceover": "The pull request is up with before and after timings, and it's deployed to the preview environment if anyone wants to try it."
+  }
+ ],
+ "next": [
+  "Same treatment for video previews",
+  "Progress bar while later pages load"
+ ],
+ "blockers": [],
+ "done": [
+  "Streaming PDF previews"
+ ],
+ "voiceover": {
+  "intro": "Here's today's update. The big one: large PDFs used to make you wait for the whole download. Now they stream, so the first page shows up in under a second.",
+  "outro": "Next up, I want to give video previews the same treatment, and add a progress bar while the later pages load. That's the update."
+ }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "standup-recap-marketplace",
+  "owner": { "name": "JeVaughn" },
+  "plugins": [
+    {
+      "name": "standup-recap",
+      "source": "./plugins/standup-recap",
+      "description": "Records what Claude Code does while it works, then plays it back as an animated, step-by-step recap you can present at standup."
+    }
+  ]
+}
