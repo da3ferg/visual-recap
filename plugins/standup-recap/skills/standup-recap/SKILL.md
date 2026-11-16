@@ -168,6 +168,19 @@ narration** / **Play silently** if it was voiced); **← →** steps, **space** 
 the voice when there is one, **F** is fullscreen, and `?step=3` in the URL jumps to a step. It's a single file, so it can be
 dropped into Slack or screen-shared directly.
 
+### MP4 export (only when asked)
+
+If the user wants a video ("as an mp4", "for Slack", "export a video"), export the built HTML:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/export.js" .standup/recaps/<date>-<slug>.html
+```
+
+It plays the recap in headless Chrome, records it at 1600x900 and lays the embedded voice clips
+over it, writing the `.mp4` next to the HTML. It takes about as long as the recap runs. It needs
+ffmpeg and Playwright (`npm i -g playwright`); if either is missing, tell the user the one command
+to install it. A silent recap exports as a silent video.
+
 ## Things that make a recap bad
 
 - More than 7 steps, or steps that are just tool calls ("Read file", "Ran grep").

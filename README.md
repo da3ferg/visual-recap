@@ -7,7 +7,8 @@ optional natural-sounding voice.
 
 - Records every prompt and tool call through Claude Code hooks, with secrets redacted.
 - `/standup` condenses the log into 4 to 7 story beats: plan, explore, edit, run, test, fix, decide, ship.
-- Builds a self-contained 16:9 player you can drop into Slack or screen-share.
+- Builds a self-contained 16:9 player you can open in any browser or screen-share.
+- Exports an MP4 on request, so the recap plays inline in Slack, email or a doc.
 - Optional voice from Kokoro, a free open-source neural voice that runs on your own machine.
   The audio is baked into the HTML file, so it sounds the same for everyone you send it to.
 
@@ -18,7 +19,8 @@ optional natural-sounding voice.
 | Claude Code | runs the plugin | `claude --version` |
 | Node.js 18 or newer | hooks and the build script (Claude Code already needs it) | `node --version` |
 | Python 3.10 to 3.13 | only for the voice (kokoro-onnx does not support 3.14 yet) | `python3.13 --version` |
-| ffmpeg (optional) | shrinks voice clips to MP3; without it they are embedded as WAV, about 5x bigger | `ffmpeg -version` |
+| ffmpeg (optional) | shrinks voice clips to MP3, and is required for MP4 export | `ffmpeg -version` |
+| Playwright (optional) | only for MP4 export; uses your installed Chrome | `npm ls -g playwright` |
 
 On a Mac, the optional tools come from Homebrew:
 
@@ -76,6 +78,7 @@ Changes you make in that folder take effect at the next session start or after `
 /standup since friday           # a longer window
 /standup with voice             # add the Kokoro narration
 /standup this session with voice, use am_michael
+/standup with voice as mp4       # also export a video
 ```
 
 Claude reads the log, writes the story to `.standup/recaps/recap.json`, builds the player and opens
@@ -185,6 +188,25 @@ If voice generation fails, the build still finishes and you get a silent recap. 
 URL options: `?step=3` jumps to a step, `?paused` freezes on it, `?autoplay` skips the start screen
 silently, `?voice` starts narrated. Controls hide while presenting and come back when you move the mouse.
 
+## Export an MP4
+
+Slack, email and most docs will not play an HTML file inline, but they will play a video. Ask for
+one ("/standup with voice as mp4", or "export that recap as a video"), or run:
+
+```bash
+npm i -g playwright
+```
+
+```bash
+node plugins/standup-recap/scripts/export.js .standup/recaps/<date>-<title>.html
+```
+
+The MP4 is written next to the HTML. The exporter plays the recap in headless Chrome at 1600x900,
+records it, and lays the Kokoro clips over the video at the moment each scene starts. It takes about
+as long as the recap runs (a 90 second recap takes about 90 seconds) and makes a file of a few MB.
+The first run downloads Playwright's small video recorder (about 1 MB). If Google Chrome is not
+installed, run `npx playwright install chromium` once.
+
 ## Build by hand
 
 The build script works without Claude, for example after you edit `recap.json` yourself:
@@ -210,6 +232,7 @@ documented in `plugins/standup-recap/skills/standup-recap/SKILL.md`, and
 | `pip install kokoro-onnx failed` | Usually a Python that is too new. Install Python 3.13, delete `~/.standup/kokoro-venv`, and build again. On Linux, install `python3-venv` first. |
 | Model download fails or stops | Delete the partial files in `~/.standup/voices/` and build again, or download them with the curl commands above. |
 | The HTML file is very large | Install ffmpeg so clips are stored as MP3 instead of WAV. |
+| MP4 export says Playwright is needed | Run `npm i -g playwright`, then export again. |
 | No sound | Click **Play with narration**, not **Play silently**, and check that the recap was built with a voice (the build prints `narration: embedded audio`). |
 
 ### Environment variables
@@ -241,6 +264,7 @@ plugins/standup-recap/
   scripts/gather.js                log → compact timeline for Claude to read
   scripts/build.js                 recap.json → self-contained animated HTML
   scripts/kokoro_tts.py            Kokoro voice → one audio clip per scene
+  scripts/export.js                recap HTML → MP4 with the voice
   skills/standup-recap/
     SKILL.md                       how Claude turns the log into a good story
     assets/player.html             the animated player
