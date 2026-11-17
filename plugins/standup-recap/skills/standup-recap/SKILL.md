@@ -1,12 +1,13 @@
 ---
 name: standup-recap
-description: Turn the work Claude Code just did into an animated, presentable standup recap — a self-contained HTML player that walks through each step (plan, explore, edit, run, test, fix, decision, ship) with motion, real diffs and terminal output. Use whenever the user asks for a standup update, a recap, "what did we do today", "show the team what changed", "walk me through what you did", a demo of the session, or runs /standup — even if they don't say "animation" or "recap".
+description: Turn the work the coding agent just did into an animated, presentable standup recap — a self-contained HTML player that walks through each step (plan, explore, edit, run, test, fix, decision, ship) with motion, real diffs and terminal output. Use whenever the user asks for a standup update, a recap, "what did we do today", "show the team what changed", "walk me through what you did", a demo of the session, or runs /standup — even if they don't say "animation" or "recap".
 ---
 
 # Standup recap
 
-The plugin's hooks have been quietly recording every prompt and tool call into
-`.standup/log/<date>.jsonl` in the project. Your job is to turn that raw log into a
+In Claude Code the plugin's hooks have been quietly recording every prompt and tool call into
+`.standup/log/<date>.jsonl` in the project. In Codex there are no hooks: `gather.js` reads Codex's
+own session files in `~/.codex/sessions` for this project instead. Either way you get the same timeline. Your job is to turn that raw log into a
 **short story a teammate can follow in under two minutes**, then build it into the
 animated player.
 
@@ -21,8 +22,9 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/gather.js" --since 2026-11-14
 node "${CLAUDE_PLUGIN_ROOT}/scripts/gather.js" --session a1b2c3d4
 ```
 
-If `CLAUDE_PLUGIN_ROOT` isn't set in your shell, the scripts live next to this skill
-at `../../scripts/`.
+If `CLAUDE_PLUGIN_ROOT` isn't set in your shell (Codex, or any other agent), the scripts live
+next to this skill at `../../scripts/`: use that absolute path instead. Add `--source codex` to read
+only Codex sessions, or `--source hooks` for only the hook log.
 
 Pick the scope from what the user asked ("this session" → the current session id
 from the most recent turn; "today" → default; "since Friday" → `--since`). If the

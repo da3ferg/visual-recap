@@ -79,12 +79,29 @@ git clone https://github.com/da3ferg/visual-recap.git ~/source/visual-recap
 
 Changes you make in that folder take effect at the next session start or after `/reload-plugins`.
 
+### Codex
+
+```bash
+codex plugin marketplace add da3ferg/visual-recap
+```
+
+```bash
+codex plugin add standup-recap@standup-recap-marketplace
+```
+
+In Codex the plugin installs no hooks. When you ask for a recap, it reads the session history Codex
+already keeps in `~/.codex/sessions` for the current project, so nothing extra runs while you work
+and there is nothing to set up first. Ask in plain words ("make a standup recap of today's work") or
+call the skill with `$standup-recap`.
+
 ### Other agents
 
-Everything the plugin does is plain Node.js, so any agent that can run a command on prompt submit,
-after each tool call and at the end of a turn can record a log. Point those three hooks at
-`node plugins/standup-recap/scripts/log-event.js` (it reads the hook event as JSON on stdin, with the fields `hook_event_name`, `session_id`, `cwd`, `prompt`, `tool_name`, `tool_input` and `tool_response`), and give
-the agent `plugins/standup-recap/skills/standup-recap/SKILL.md` as its instructions for building a recap.
+Everything the plugin does is plain Node.js. Any agent that can run a command on prompt submit,
+after each tool call and at the end of a turn can record a log: point those three hooks at
+`node plugins/standup-recap/scripts/log-event.js` (it reads the hook event as JSON on stdin, with the
+fields `hook_event_name`, `session_id`, `cwd`, `prompt`, `tool_name`, `tool_input` and
+`tool_response`). Then give the agent `plugins/standup-recap/skills/standup-recap/SKILL.md` as its
+instructions for building a recap.
 
 ## Make a recap
 
@@ -97,11 +114,14 @@ the agent `plugins/standup-recap/skills/standup-recap/SKILL.md` as its instructi
 /standup with voice as mp4       # also export a video
 ```
 
+Those are Claude Code commands. In Codex, ask the same things in plain words.
+
 The agent reads the log, writes the story to `.standup/recaps/recap.json`, builds the player and opens
 it. The finished file is `.standup/recaps/<date>-<title>.html`.
 
-Recording only starts once the plugin is installed. If there is no log yet, the agent offers to build
-the recap from `git log` and the conversation instead.
+In Claude Code, recording starts once the plugin is installed. In Codex, any session you have already
+had in the project counts. If there is no history at all, the agent offers to build the recap from
+`git log` and the conversation instead.
 
 ## Get the voice
 
@@ -243,7 +263,8 @@ documented in `plugins/standup-recap/skills/standup-recap/SKILL.md`, and
 
 | Problem | Fix |
 |---|---|
-| `.standup/log/` never appears | Restart the agent after installing, and check that the plugin is listed as enabled (`/plugin` in Claude Code). |
+| `.standup/log/` never appears (Claude Code) | Restart Claude Code after installing, and check `/plugin` lists `standup-recap` as enabled. |
+| "no Codex sessions for this project" | The recap only reads sessions started in this folder or below it. Open Codex in the project and try again. |
 | "Python 3.10 to 3.13 is needed for the Kokoro voice" | Install Python 3.13 (see Requirements), then build again. |
 | `pip install kokoro-onnx failed` | Usually a Python that is too new. Install Python 3.13, delete `~/.standup/kokoro-venv`, and build again. On Linux, install `python3-venv` first. |
 | Model download fails or stops | Delete the partial files in `~/.standup/voices/` and build again, or download them with the curl commands above. |
@@ -263,7 +284,8 @@ documented in `plugins/standup-recap/skills/standup-recap/SKILL.md`, and
 
 ## Privacy
 
-- The log stays in your project's `.standup/` folder, which ignores itself in git.
+- The log stays in your project's `.standup/` folder, which ignores itself in git. In Codex, the
+  plugin only reads Codex's own session files on your machine and never copies them anywhere.
 - API keys, tokens, passwords and credentials in URLs are redacted before anything is written.
 - Kokoro runs entirely on your machine. The OpenAI and ElevenLabs options send the narration text
   (not your code) to those services.
@@ -271,12 +293,16 @@ documented in `plugins/standup-recap/skills/standup-recap/SKILL.md`, and
 ## Layout
 
 ```
-.claude-plugin/marketplace.json
+.claude-plugin/marketplace.json    Claude Code marketplace
+.agents/plugins/marketplace.json   Codex marketplace
 plugins/standup-recap/
-  .claude-plugin/plugin.json
-  hooks/hooks.json                 prompt, tool-call and end-of-turn hooks → log-event.js
-  commands/standup.md              the /standup command
+  .claude-plugin/plugin.json       Claude Code manifest
+  .claude-plugin/hooks.json        prompt, tool-call and end-of-turn hooks → log-event.js (Claude Code only)
+  .codex-plugin/plugin.json        Codex manifest (skills only, no hooks)
+  assets/icon.png                  plugin icon
+  commands/standup.md              the /standup command (Claude Code)
   scripts/log-event.js             hook logger; never blocks the agent, always exits 0
+  scripts/codex-log.js             reads Codex session files into the same timeline
   scripts/gather.js                log → compact timeline for the agent to read
   scripts/build.js                 recap.json → self-contained animated HTML
   scripts/kokoro_tts.py            Kokoro voice → one audio clip per scene
@@ -285,6 +311,7 @@ plugins/standup-recap/
     SKILL.md                       how the agent turns the log into a good story
     assets/player.html             the animated player
     assets/example-recap.json      a full sample recap
+  test/codex-log.test.js           node test/codex-log.test.js
 ```
 
 ## Credits

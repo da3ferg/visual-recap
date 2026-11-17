@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// standup-recap: turn the raw hook log into a compact timeline Claude can read in one go.
+// standup-recap: turn the raw hook log (or Codex's session files) into a compact timeline the agent can read in one go.
 //
-// usage: node gather.js [--day YYYY-MM-DD | --since YYYY-MM-DD] [--session <8-char id>] [--project <dir>]
+// usage: node gather.js [--day YYYY-MM-DD | --since YYYY-MM-DD] [--session <8-char id>] [--project <dir>] [--source hooks|codex]
 // prints a plain-text timeline grouped by turn (one turn = one user prompt), plus git stats.
 
 const fs = require('fs');
@@ -17,27 +17,34 @@ const since = opt('--since');
 const sid = opt('--session');
 
 const dir = path.join(root, '.standup', 'log');
-if (!fs.existsSync(dir)) {
-  console.log(`No standup log yet in ${dir}.\nThe plugin's hooks record work from the moment it is installed; nothing was captured before that.`);
-  process.exit(0);
-}
+const source = opt('--source'); // hooks | codex; default: hooks, then Codex's own session files
+const localDay = iso => new Date(iso).toLocaleDateString('en-CA');
+const inRange = d => (day ? d === day : since ? d >= since : d === today);
 
-let files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')).sort();
-if (day) files = files.filter(f => f.startsWith(day));
-else if (since) files = files.filter(f => f.slice(0, 10) >= since);
-else files = files.filter(f => f.startsWith(today));
-
-let events = [];
-for (const f of files) {
-  for (const line of fs.readFileSync(path.join(dir, f), 'utf8').split('\n')) {
-    if (!line.trim()) continue;
-    try { events.push(JSON.parse(line)); } catch {}
+let events = [], days = [];
+if (source !== 'codex' && fs.existsSync(dir)) {
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')).sort().filter(f => inRange(f.slice(0, 10)));
+  for (const f of files) {
+    for (const line of fs.readFileSync(path.join(dir, f), 'utf8').split('\n')) {
+      if (!line.trim()) continue;
+      try { events.push(JSON.parse(line)); } catch {}
+    }
   }
+  days = files.map(f => f.slice(0, 10));
+}
+if (!events.length && source !== 'hooks') {
+  // the day before covers sessions that started before midnight
+  const from = new Date(new Date(day || since || today).getTime() - 864e5).toLocaleDateString('en-CA');
+  events = require('./codex-log').readCodex(root, from).filter(e => inRange(localDay(e.ts)));
+  days = [...new Set(events.map(e => localDay(e.ts)))];
+  if (events.length) days.push('from Codex sessions');
 }
 if (sid) events = events.filter(e => e.sid === sid);
 if (!events.length) {
-  const avail = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')).map(f => f.slice(0, 10)).join(', ');
-  console.log(`No events for that range. Days with logs: ${avail || 'none'}`);
+  const avail = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')).map(f => f.slice(0, 10)).join(', ') : '';
+  console.log(avail
+    ? `No events for that range. Days with logs: ${avail}`
+    : `No log for that range in ${dir}, and no Codex sessions for this project either.`);
   process.exit(0);
 }
 
@@ -89,7 +96,7 @@ function line(e) {
 }
 
 const out = [];
-out.push(`# Standup log — ${files.map(f => f.slice(0, 10)).join(', ')}  (${root})`);
+out.push(`# Standup log: ${days.join(', ')}  (${root})`);
 turns.forEach((tr, i) => {
   out.push('');
   out.push(`## Turn ${i + 1}  ${t(tr.start)}${tr.end ? '–' + t(tr.end) : ''}  [session ${tr.sid}]`);

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // standup-recap: hook logger.
-// Called by Claude Code on UserPromptSubmit, PostToolUse and Stop.
+// Called by the agent's hooks on UserPromptSubmit, PostToolUse and Stop.
 // Appends one compact JSON line per event to <project>/.standup/log/<YYYY-MM-DD>.jsonl
-// Never blocks Claude: any error is swallowed and the script exits 0.
+// Never blocks the agent: any error is swallowed and the script exits 0.
 
 const fs = require('fs');
 const path = require('path');
@@ -145,10 +145,14 @@ function main(raw) {
   fs.appendFileSync(path.join(dir, `${day}.jsonl`), JSON.stringify(rec) + '\n');
 }
 
-let buf = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', c => (buf += c));
-process.stdin.on('end', () => {
-  try { main(buf); } catch { /* never break Claude */ }
-  process.exit(0);
-});
+module.exports = { clip, redact, rel, summarizeTool };
+
+if (require.main === module) {
+  let buf = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', c => (buf += c));
+  process.stdin.on('end', () => {
+    try { main(buf); } catch { /* never break the agent */ }
+    process.exit(0);
+  });
+}

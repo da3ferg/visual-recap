@@ -1,11 +1,16 @@
 {
   "name": "standup-recap-marketplace",
-  "owner": { "name": "JeVaughn" },
+  "owner": {
+    "name": "JeVaughn"
+  },
   "plugins": [
     {
       "name": "standup-recap",
       "source": "./plugins/standup-recap",
-      "description": "Records what Claude Code does while it works, then plays it back as an animated, step-by-step recap you can present at standup."
+      "description": "Records what your coding agent does while it works, then plays it back as an animated, step-by-step recap you can present at standup."
     }
-  ]
+  ],
+  "metadata": {
+    "description": "Animated, narrated standup recaps of what your coding agent did."
+  }
 }

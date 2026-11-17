@@ -1,0 +1,40 @@
+{
+  "name": "standup-recap",
+  "version": "0.2.0",
+  "description": "Turns what your coding agent did into an animated, step-by-step standup recap with real diffs, terminal output and an optional local voice.",
+  "author": {
+    "name": "JeVaughn Ferguson",
+    "url": "https://github.com/da3ferg"
+  },
+  "homepage": "https://github.com/da3ferg/visual-recap",
+  "repository": "https://github.com/da3ferg/visual-recap",
+  "keywords": [
+    "standup",
+    "recap",
+    "animation",
+    "presentation",
+    "team"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Standup Recap",
+    "shortDescription": "Animated standup recaps",
+    "longDescription": "Turns the work your agent did today into a short animated story: plan, explore, edit, run, test, ship. Real diffs and terminal output, one self-contained HTML file, optional narration from a free local voice, and MP4 export. In Codex it reads your session history, so nothing extra runs while you work.",
+    "developerName": "JeVaughn Ferguson",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/da3ferg/visual-recap",
+    "supportURL": "https://github.com/da3ferg/visual-recap/issues",
+    "defaultPrompt": [
+      "Make a standup recap of today's work.",
+      "Recap this session with voice.",
+      "Export today's recap as an MP4."
+    ],
+    "brandColor": "#7C5CFF",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

@@ -1,7 +1,18 @@
 {
   "name": "standup-recap",
-  "version": "0.1.0",
-  "description": "Records what Claude Code does while it works, then plays it back as an animated, step-by-step recap you can present at standup.",
-  "author": { "name": "JeVaughn" },
-  "keywords": ["standup", "recap", "animation", "presentation", "team"]
+  "version": "0.2.0",
+  "description": "Records what your coding agent does while it works, then plays it back as an animated, step-by-step recap you can present at standup.",
+  "author": {
+    "name": "JeVaughn"
+  },
+  "keywords": [
+    "standup",
+    "recap",
+    "animation",
+    "presentation",
+    "team"
+  ],
+  "hooks": "./.claude-plugin/hooks.json",
+  "homepage": "https://github.com/da3ferg/visual-recap",
+  "repository": "https://github.com/da3ferg/visual-recap"
 }
