@@ -24,7 +24,7 @@ fs.writeFileSync(path.join(d, 'rollout-1.jsonl'), [
 ].join('\n'));
 fs.writeFileSync(path.join(d, 'rollout-2.jsonl'), L('session_meta', { id: 'other', cwd: '/elsewhere' }) + '\n');
 
-const ev = require('../scripts/codex-log').readCodex(root, '2026-11-15');
+const ev = require('../lib/codex-log').readCodex(root, '2026-11-15');
 const kinds = ev.map(e => e.ev === 'PostToolUse' ? e.tool : e.ev);
 assert.deepStrictEqual(kinds, ['UserPromptSubmit', 'Bash', 'Edit', 'Write', 'Edit', 'Bash', 'Stop']);
 assert.match(ev[0].prompt, /\[redacted\]/);

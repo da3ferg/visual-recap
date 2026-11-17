@@ -1,8 +1,4 @@
-#!/usr/bin/env node
-// standup-recap: hook logger.
-// Called by the agent's hooks on UserPromptSubmit, PostToolUse and Stop.
-// Appends one compact JSON line per event to <project>/.standup/log/<YYYY-MM-DD>.jsonl
-// Never blocks the agent: any error is swallowed and the script exits 0.
+// visual-recap: turn one tool call into a compact, redacted timeline event.
 
 const fs = require('fs');
 const path = require('path');
@@ -116,43 +112,4 @@ function summarizeTool(name, input = {}, response, cwd) {
   return e;
 }
 
-function main(raw) {
-  let ev;
-  try { ev = JSON.parse(raw || '{}'); } catch { return; }
-  const cwd = ev.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const root = process.env.CLAUDE_PROJECT_DIR || cwd;
-  const dir = path.join(root, '.standup', 'log');
-  fs.mkdirSync(dir, { recursive: true });
-
-  // keep the log out of git without touching the user's .gitignore
-  const gi = path.join(root, '.standup', '.gitignore');
-  if (!fs.existsSync(gi)) fs.writeFileSync(gi, '*\n');
-
-  const now = new Date();
-  const day = now.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
-  const rec = { ts: now.toISOString(), sid: (ev.session_id || '').slice(0, 8), ev: ev.hook_event_name };
-
-  if (ev.hook_event_name === 'UserPromptSubmit') {
-    rec.prompt = clip(redact(ev.prompt), 400);
-  } else if (ev.hook_event_name === 'PostToolUse') {
-    Object.assign(rec, summarizeTool(ev.tool_name, ev.tool_input, ev.tool_response, cwd));
-  } else if (ev.hook_event_name === 'Stop') {
-    // nothing extra: marks the end of a turn
-  } else {
-    return;
-  }
-
-  fs.appendFileSync(path.join(dir, `${day}.jsonl`), JSON.stringify(rec) + '\n');
-}
-
 module.exports = { clip, redact, rel, summarizeTool };
-
-if (require.main === module) {
-  let buf = '';
-  process.stdin.setEncoding('utf8');
-  process.stdin.on('data', c => (buf += c));
-  process.stdin.on('end', () => {
-    try { main(buf); } catch { /* never break the agent */ }
-    process.exit(0);
-  });
-}

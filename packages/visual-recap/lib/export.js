@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 // standup-recap: turn a built recap HTML into an MP4 (plays anywhere video does).
-// usage: node export.js <recap.html> [out.mp4]
+// usage: visual-recap export <recap.html> [out.mp4]
 //
 // Plays the recap in headless Chrome at 1600x900, records it, then lays the embedded voice clips
 // over the video at the moment each scene started. Needs ffmpeg and Playwright
@@ -11,7 +10,7 @@ const path = require('path');
 const { spawnSync, execSync } = require('child_process');
 
 const [input, outArg] = process.argv.slice(2);
-if (!input) { console.error('usage: node export.js <recap.html> [out.mp4]'); process.exit(1); }
+if (!input) { console.error('usage: visual-recap export <recap.html> [out.mp4]'); process.exit(1); }
 const html = path.resolve(input);
 const out = path.resolve(outArg || html.replace(/\.html?$/i, '') + '.mp4');
 

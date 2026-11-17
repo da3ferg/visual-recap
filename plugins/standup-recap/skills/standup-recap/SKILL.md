@@ -5,9 +5,9 @@ description: Turn the work the coding agent just did into an animated, presentab
 
 # Standup recap
 
-In Claude Code the plugin's hooks have been quietly recording every prompt and tool call into
-`.standup/log/<date>.jsonl` in the project. In Codex there are no hooks: `gather.js` reads Codex's
-own session files in `~/.codex/sessions` for this project instead. Either way you get the same timeline. Your job is to turn that raw log into a
+Claude Code and Codex already keep a full history of every session on this machine
+(`~/.claude/projects` and `~/.codex/sessions`). The `visual-recap` command line tool reads that
+history for the current project and prints a compact timeline. Your job is to turn that timeline into a
 **short story a teammate can follow in under two minutes**, then build it into the
 animated player.
 
@@ -17,14 +17,14 @@ wants to know *what changed, why, and whether it works* — not every file you r
 ## 1. Gather
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/gather.js"                 # today (default)
-node "${CLAUDE_PLUGIN_ROOT}/scripts/gather.js" --since 2026-11-14
-node "${CLAUDE_PLUGIN_ROOT}/scripts/gather.js" --session a1b2c3d4
+npx -y visual-recap@0.1.0 gather                    # today (default)
+npx -y visual-recap@0.1.0 gather --since 2026-11-14
+npx -y visual-recap@0.1.0 gather --session a1b2c3d4
 ```
 
-If `CLAUDE_PLUGIN_ROOT` isn't set in your shell (Codex, or any other agent), the scripts live
-next to this skill at `../../scripts/`: use that absolute path instead. Add `--source codex` to read
-only Codex sessions, or `--source hooks` for only the hook log.
+Run it from the project folder. It reads both Claude Code and Codex sessions; add `--source claude`
+or `--source codex` to read only one. The first `npx` run downloads the tool from npm (no other
+dependencies), so it needs network access once; if a sandbox blocks it, ask the user to allow it.
 
 Pick the scope from what the user asked ("this session" → the current session id
 from the most recent turn; "today" → default; "since Friday" → `--since`). If the
@@ -135,12 +135,12 @@ Writing for the ear:
 - 15–45 words per scene. The voice sets the pace, so long voiceovers make a long recap.
 - Keep it consistent with what's on screen; the voiceover expands on the slide, it doesn't contradict it.
 
-Check what will be spoken with `node build.js recap.json --print-script`.
+Check what will be spoken with `npx -y visual-recap@0.1.0 build .standup/recaps/recap.json --print-script`.
 
 ## 5. Build and hand it over
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/build.js" .standup/recaps/recap.json
+npx -y visual-recap@0.1.0 build .standup/recaps/recap.json
 ```
 
 It validates the JSON (fix and rerun if it complains) and writes a single HTML file to
@@ -152,16 +152,12 @@ Narration options, only when the user asked for a voice:
 | flag | voice | needs |
 |---|---|---|
 | `--tts kokoro [--voice af_heart]` | **default when a voice is asked for.** Free open-source Kokoro voice, generated locally and embedded as audio | Python 3; first run sets up `~/.standup/kokoro-venv` and downloads ~120 MB of model files to `~/.standup/voices` |
-| `--tts openai [--voice coral]` | OpenAI TTS, embedded in the file as audio | `OPENAI_API_KEY` |
-| `--tts elevenlabs [--voice <voice id>]` | ElevenLabs, embedded as audio | `ELEVENLABS_API_KEY` |
 | `--audio-dir <dir>` | the user's own recordings: `0.mp3` intro, `1.mp3`… steps, last = wrap-up | the files |
 
 When a voice is asked for, use `--tts kokoro` unless the user named another option. Generation takes roughly
 5–10 seconds per scene, so run it in the background if your harness allows and tell the user it's
 voicing. The first run also takes a minute or two for setup. Good Kokoro voices: `af_heart` (warm, default), `af_bella`,
-`am_michael`, `am_fenrir`, `bf_emma` and `bm_george` (British). Use the one the user names. If the user wants
-a paid AI voice instead, check whether `OPENAI_API_KEY` or `ELEVENLABS_API_KEY` is set
-(`[ -n "$OPENAI_API_KEY" ]`) and use it. Never print or log the key. If TTS fails, the build still succeeds as a silent recap; tell the user why. Open it for the user if you can
+`am_michael`, `am_fenrir`, `bf_emma` and `bm_george` (British). Use the one the user names. If TTS fails, the build still succeeds as a silent recap; tell the user why. Open it for the user if you can
 (`open` on macOS, `xdg-open` on Linux, `start` on Windows).
 
 Then tell the user, in two or three lines: where the file is, the one-sentence
@@ -175,7 +171,7 @@ opened in any browser or screen-shared directly.
 If the user wants a video ("as an mp4", "export a video"), export the built HTML:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/export.js" .standup/recaps/<date>-<slug>.html
+npx -y visual-recap@0.1.0 export .standup/recaps/<date>-<slug>.html
 ```
 
 It plays the recap in headless Chrome, records it at 1600x900 and lays the embedded voice clips

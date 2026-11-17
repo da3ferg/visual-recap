@@ -1,7 +1,7 @@
 {
   "name": "standup-recap",
-  "version": "0.2.0",
-  "description": "Records what your coding agent does while it works, then plays it back as an animated, step-by-step recap you can present at standup.",
+  "version": "0.3.0",
+  "description": "Turns what your coding agent did into an animated, step-by-step standup recap you can present, with real diffs, terminal output and an optional local voice.",
   "author": {
     "name": "JeVaughn"
   },
@@ -12,7 +12,6 @@
     "presentation",
     "team"
   ],
-  "hooks": "./.claude-plugin/hooks.json",
   "homepage": "https://github.com/da3ferg/visual-recap",
   "repository": "https://github.com/da3ferg/visual-recap",
   "license": "MIT"

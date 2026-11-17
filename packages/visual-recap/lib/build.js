@@ -1,7 +1,6 @@
-#!/usr/bin/env node
 // standup-recap: embed a recap.json into the animated player and write a single self-contained HTML file.
 //
-// usage: node build.js <recap.json> [out.html] [--tts kokoro|openai|elevenlabs] [--voice <name or id>] [--audio-dir <dir>]
+// usage: visual-recap build <recap.json> [out.html] [--tts kokoro|openai|elevenlabs] [--voice <name or id>] [--audio-dir <dir>]
 //
 //   (no flags)           silent recap: no narration, no voice controls
 //   --tts kokoro         free open-source Kokoro voice, generated locally (Python; ~120 MB model downloaded once)
@@ -24,7 +23,7 @@ const voiceArg = flag('--voice');
 const audioDir = flag('--audio-dir');
 const printScript = bool('--print-script');
 const [input, outArg] = argv;
-if (!input) { console.error('usage: node build.js <recap.json> [out.html] [--tts kokoro|openai|elevenlabs] [--voice X] [--audio-dir D]'); process.exit(1); }
+if (!input) { console.error('usage: visual-recap build <recap.json> [out.html] [--tts kokoro|openai|elevenlabs] [--voice X] [--audio-dir D]'); process.exit(1); }
 if (tts && !['kokoro', 'openai', 'elevenlabs'].includes(tts)) { console.error('--tts must be kokoro, openai or elevenlabs'); process.exit(1); }
 
 const recap = JSON.parse(fs.readFileSync(input, 'utf8'));
@@ -159,7 +158,7 @@ async function main() {
   }
   if (Object.keys(audio).length) recap.audio = audio; else delete recap.audio;
 
-  const tpl = fs.readFileSync(path.join(__dirname, '..', 'skills', 'standup-recap', 'assets', 'player.html'), 'utf8');
+  const tpl = fs.readFileSync(path.join(__dirname, 'player.html'), 'utf8');
   const LS = String.fromCharCode(0x2028), PS = String.fromCharCode(0x2029);
   const json = JSON.stringify(recap).replace(/</g, '\\u003c').split(LS).join('\\u2028').split(PS).join('\\u2029');
   const html = tpl.replace('/*__RECAP__*/null', () => json);
@@ -170,6 +169,9 @@ async function main() {
   const out = outArg || path.join(root, '.standup', 'recaps', `${date}-${slug}.html`);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, html);
+  // keep .standup out of git without touching the user's .gitignore
+  const gi = path.join(root, '.standup', '.gitignore');
+  if (fs.existsSync(path.dirname(gi)) && !fs.existsSync(gi)) fs.writeFileSync(gi, '*\n');
 
   console.log(`wrote ${out}  (${(html.length / 1024).toFixed(0)} KB)`);
   console.log(`${lines.length} scenes (intro + ${recap.steps.length} steps + wrap-up) · narration: ${recap.audio ? 'embedded audio' : 'none (silent)'}`);

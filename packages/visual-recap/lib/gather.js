@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-// standup-recap: turn the raw hook log (or Codex's session files) into a compact timeline the agent can read in one go.
+// visual-recap: turn Claude Code and Codex session history into a compact timeline the agent can read in one go.
 //
-// usage: node gather.js [--day YYYY-MM-DD | --since YYYY-MM-DD] [--session <8-char id>] [--project <dir>] [--source hooks|codex]
+// usage: visual-recap gather [--day YYYY-MM-DD | --since YYYY-MM-DD] [--session <8-char id>] [--project <dir>] [--source claude|codex|all]
 // prints a plain-text timeline grouped by turn (one turn = one user prompt), plus git stats.
 
 const fs = require('fs');
@@ -10,43 +9,34 @@ const { execSync } = require('child_process');
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
-const root = opt('--project', process.env.CLAUDE_PROJECT_DIR || process.cwd());
+const root = path.resolve(opt('--project', process.env.CLAUDE_PROJECT_DIR || process.cwd()));
 const today = new Date().toLocaleDateString('en-CA');
 const day = opt('--day');
 const since = opt('--since');
 const sid = opt('--session');
 
-const dir = path.join(root, '.standup', 'log');
-const source = opt('--source'); // hooks | codex; default: hooks, then Codex's own session files
+const source = opt('--source', 'all'); // claude | codex | all
 const localDay = iso => new Date(iso).toLocaleDateString('en-CA');
 const inRange = d => (day ? d === day : since ? d >= since : d === today);
+// the day before covers sessions that started before midnight
+const from = new Date(new Date(day || since || today).getTime() - 864e5).toLocaleDateString('en-CA');
 
-let events = [], days = [];
-if (source !== 'codex' && fs.existsSync(dir)) {
-  const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')).sort().filter(f => inRange(f.slice(0, 10)));
-  for (const f of files) {
-    for (const line of fs.readFileSync(path.join(dir, f), 'utf8').split('\n')) {
-      if (!line.trim()) continue;
-      try { events.push(JSON.parse(line)); } catch {}
-    }
-  }
-  days = files.map(f => f.slice(0, 10));
-}
-if (!events.length && source !== 'hooks') {
-  // the day before covers sessions that started before midnight
-  const from = new Date(new Date(day || since || today).getTime() - 864e5).toLocaleDateString('en-CA');
-  events = require('./codex-log').readCodex(root, from).filter(e => inRange(localDay(e.ts)));
-  days = [...new Set(events.map(e => localDay(e.ts)))];
-  if (events.length) days.push('from Codex sessions');
-}
+let events = [];
+if (source !== 'codex') events.push(...require('./claude-log').readClaude(root, from).map(e => ({ ...e, src: 'Claude Code' })));
+if (source !== 'claude') events.push(...require('./codex-log').readCodex(root, from).map(e => ({ ...e, src: 'Codex' })));
+events = events.filter(e => e.ts && inRange(localDay(e.ts)));
+// keep each session together (sessions can overlap), sessions in the order they started
+const first = {};
+for (const e of events) if (!first[e.sid] || e.ts < first[e.sid]) first[e.sid] = e.ts;
+const key = e => `${first[e.sid]}|${e.sid}|${e.ts}`;
+events.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
 if (sid) events = events.filter(e => e.sid === sid);
 if (!events.length) {
-  const avail = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')).map(f => f.slice(0, 10)).join(', ') : '';
-  console.log(avail
-    ? `No events for that range. Days with logs: ${avail}`
-    : `No log for that range in ${dir}, and no Codex sessions for this project either.`);
+  console.log(`No Claude Code or Codex sessions for ${root} in that range.`);
   process.exit(0);
 }
+const days = [...new Set(events.map(e => localDay(e.ts)))];
+const sources = [...new Set(events.map(e => e.src))];
 
 // group into turns
 const turns = [];
@@ -96,7 +86,7 @@ function line(e) {
 }
 
 const out = [];
-out.push(`# Standup log: ${days.join(', ')}  (${root})`);
+out.push(`# Standup log: ${days.join(', ')} from ${sources.join(' and ')}  (${root})`);
 turns.forEach((tr, i) => {
   out.push('');
   out.push(`## Turn ${i + 1}  ${t(tr.start)}${tr.end ? '–' + t(tr.end) : ''}  [session ${tr.sid}]`);

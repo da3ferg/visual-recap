@@ -1,9 +1,9 @@
-// standup-recap: read Codex's own session files (~/.codex/sessions) into the same event shape the
+// visual-recap: read Codex's own session files (~/.codex/sessions) into the same event shape the
 // hook logger writes, so recaps work in Codex without any hooks installed.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { clip, redact, summarizeTool } = require('./log-event');
+const { clip, redact, summarizeTool } = require('./summarize');
 
 const home = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
 

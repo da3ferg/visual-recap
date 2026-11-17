@@ -1,6 +1,6 @@
 {
   "name": "standup-recap",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Turns what your coding agent did into an animated, step-by-step standup recap with real diffs, terminal output and an optional local voice.",
   "author": {
     "name": "JeVaughn Ferguson",
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Standup Recap",
     "shortDescription": "Animated standup recaps",
-    "longDescription": "Turns the work your agent did today into a short animated story: plan, explore, edit, run, test, ship. Real diffs and terminal output, one self-contained HTML file, optional narration from a free local voice, and MP4 export. In Codex it reads your session history, so nothing extra runs while you work.",
+    "longDescription": "Turns the work your agent did today into a short animated story: plan, explore, edit, run, test, ship. Real diffs and terminal output, one self-contained HTML file, optional narration from a free local voice, and MP4 export. It reads the session history Claude Code and Codex already keep, so nothing extra runs while you work.",
     "developerName": "JeVaughn Ferguson",
     "category": "Productivity",
     "capabilities": [
