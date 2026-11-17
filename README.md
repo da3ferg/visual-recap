@@ -8,7 +8,7 @@ optional natural-sounding voice.
 - Records every prompt and tool call through Claude Code hooks, with secrets redacted.
 - `/standup` condenses the log into 4 to 7 story beats: plan, explore, edit, run, test, fix, decide, ship.
 - Builds a self-contained 16:9 player you can open in any browser or screen-share.
-- Exports an MP4 on request, so the recap plays inline in Slack, email or a doc.
+- Exports an MP4 on request, for anywhere that plays video but not HTML.
 - Optional voice from Kokoro, a free open-source neural voice that runs on your own machine.
   The audio is baked into the HTML file, so it sounds the same for everyone you send it to.
 
@@ -190,7 +190,7 @@ silently, `?voice` starts narrated. Controls hide while presenting and come back
 
 ## Export an MP4
 
-Slack, email and most docs will not play an HTML file inline, but they will play a video. Ask for
+Most chat apps, email and docs will not play an HTML file inline, but they will play a video. Ask for
 one ("/standup with voice as mp4", or "export that recap as a video"), or run:
 
 ```bash

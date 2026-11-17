@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// standup-recap: turn a built recap HTML into an MP4 (plays inline in Slack, email, anywhere).
+// standup-recap: turn a built recap HTML into an MP4 (plays anywhere video does).
 // usage: node export.js <recap.html> [out.mp4]
 //
 // Plays the recap in headless Chrome at 1600x900, records it, then lays the embedded voice clips

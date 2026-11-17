@@ -166,11 +166,11 @@ Then tell the user, in two or three lines: where the file is, the one-sentence
 summary, and how to drive it: it opens on a start screen with **Play** (or **Play with
 narration** / **Play silently** if it was voiced); **← →** steps, **space** pauses, **V** toggles
 the voice when there is one, **F** is fullscreen, and `?step=3` in the URL jumps to a step. It's a single file, so it can be
-dropped into Slack or screen-shared directly.
+opened in any browser or screen-shared directly.
 
 ### MP4 export (only when asked)
 
-If the user wants a video ("as an mp4", "for Slack", "export a video"), export the built HTML:
+If the user wants a video ("as an mp4", "export a video"), export the built HTML:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/export.js" .standup/recaps/<date>-<slug>.html
