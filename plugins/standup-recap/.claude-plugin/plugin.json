@@ -1,6 +1,6 @@
 {
   "name": "standup-recap",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Turns what your coding agent did into an animated, step-by-step standup recap you can present, with real diffs, terminal output and an optional local voice.",
   "author": {
     "name": "JeVaughn Ferguson",

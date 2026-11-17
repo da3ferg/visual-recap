@@ -27,7 +27,7 @@ The repository holds two things:
   the history into a good story) and a `/standup` command.
 - `packages/visual-recap/`: the `visual-recap` command line tool. It reads the history, builds the
   player, voices it and exports the MP4. The skill runs it straight from this repository with
-  `npx github:da3ferg/visual-recap#v0.3.0`, pinned to a release tag, so there is nothing to install by
+  `npx github:da3ferg/visual-recap#v0.4.0`, pinned to a release tag, so there is nothing to install by
   hand and no npm account involved.
 
 ## Requirements
@@ -155,7 +155,7 @@ curl -L -o ~/.standup/voices/voices-v1.0.bin https://github.com/thewh1teagle/kok
 Build the bundled example with the voice and open it:
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 example ~/standup-demo.json && npx -y github:da3ferg/visual-recap#v0.3.0 build ~/standup-demo.json ~/standup-demo.html --tts kokoro && open ~/standup-demo.html
+npx -y github:da3ferg/visual-recap#v0.4.0 example ~/standup-demo.json && npx -y github:da3ferg/visual-recap#v0.4.0 build ~/standup-demo.json ~/standup-demo.html --tts kokoro && open ~/standup-demo.html
 ```
 
 (On Linux use `xdg-open` instead of `open`.)
@@ -187,7 +187,7 @@ and on for each step, the last one for the wrap-up). The plugin's skill only use
 To see exactly what will be spoken before generating anything:
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 build .standup/recaps/recap.json --print-script
+npx -y github:da3ferg/visual-recap#v0.4.0 build .standup/recaps/recap.json --print-script
 ```
 
 If voice generation fails, the build still finishes and you get a silent recap. The error explains why.
@@ -215,8 +215,10 @@ npm i -g playwright
 ```
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 export .standup/recaps/<date>-<title>.html
+npx -y github:da3ferg/visual-recap#v0.4.0 export .standup/recaps/<date>-<title>.html
 ```
+
+Add `--portrait` for a 1080x1920 vertical video (TikTok, Reels, Shorts): the player stacks each panel under its text. The HTML player also switches to this layout on its own on a phone held upright.
 
 The MP4 is written next to the HTML. The exporter plays the recap in headless Chrome at 1600x900,
 records it, and lays the Kokoro clips over the video at the moment each scene starts. It takes about
@@ -229,17 +231,17 @@ installed, run `npx playwright install chromium` once.
 `visual-recap` works without any agent:
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 gather --since 2026-11-14
+npx -y github:da3ferg/visual-recap#v0.4.0 gather --since 2026-11-14
 ```
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 build .standup/recaps/recap.json out.html --tts kokoro --voice am_michael
+npx -y github:da3ferg/visual-recap#v0.4.0 build .standup/recaps/recap.json out.html --tts kokoro --voice am_michael
 ```
 
 `gather` prints the timeline of this project's Claude Code and Codex sessions (`--source claude` or
 `--source codex` for one of them, `--session <id>` for one session). `build` validates `recap.json`
 first and tells you what is wrong if a step is missing a field. The format is documented in
-`plugins/standup-recap/skills/standup-recap/SKILL.md`, and `npx -y github:da3ferg/visual-recap#v0.3.0 example` prints a full
+`plugins/standup-recap/skills/standup-recap/SKILL.md`, and `npx -y github:da3ferg/visual-recap#v0.4.0 example` prints a full
 sample.
 
 ## Troubleshooting

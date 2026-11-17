@@ -1,5 +1,5 @@
 // standup-recap: turn a built recap HTML into an MP4 (plays anywhere video does).
-// usage: visual-recap export <recap.html> [out.mp4]
+// usage: visual-recap export <recap.html> [out.mp4] [--portrait]
 //
 // Plays the recap in headless Chrome at 1600x900, records it, then lays the embedded voice clips
 // over the video at the moment each scene started. Needs ffmpeg and Playwright
@@ -9,7 +9,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync, execSync } = require('child_process');
 
-const [input, outArg] = process.argv.slice(2);
+const [input, outArg] = process.argv.slice(2).filter(a => !a.startsWith('--'));
 if (!input) { console.error('usage: visual-recap export <recap.html> [out.mp4]'); process.exit(1); }
 const html = path.resolve(input);
 const out = path.resolve(outArg || html.replace(/\.html?$/i, '') + '.mp4');
@@ -36,7 +36,8 @@ async function main() {
   const audio = clips();
   const voiced = Object.keys(audio).length > 0;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'standup-mp4-'));
-  const W = 1600, H = 900;
+  const portrait = process.argv.includes('--portrait');
+  const [W, H] = portrait ? [1080, 1920] : [1600, 900];
 
   const args = ['--autoplay-policy=no-user-gesture-required'];
   let browser;
@@ -70,7 +71,7 @@ async function main() {
       report();
     });
   });
-  await page.goto(require('url').pathToFileURL(html).href + (voiced ? '?voice' : '?autoplay'));
+  await page.goto(require('url').pathToFileURL(html).href + (voiced ? '?voice' : '?autoplay') + (portrait ? '&portrait' : ''));
 
   // wait for the last scene, then until its animation and voice have both finished
   const n = await page.evaluate(() => document.getElementById('track').children.length);

@@ -161,6 +161,22 @@ h1 .w,.narr .w{display:inline-block;opacity:0;transform:translateY(.45em);filter
 #tl .seg:hover .lbl{color:var(--ink2)}
 @keyframes fill{to{width:100%}}
 
+/* portrait stage (phones, vertical video): 900x1600, panels stack under the text */
+.portrait #stage{width:900px;height:1600px}
+.portrait #top{left:100px;right:110px;top:150px;flex-wrap:wrap;row-gap:6px}
+.portrait #top .sp{flex-basis:100%;height:0}
+.portrait #scene{inset:230px 110px 260px 100px;grid-template-columns:1fr;grid-template-rows:auto auto;align-content:center;gap:44px}
+.portrait h1{font-size:64px}
+.portrait .narr{font-size:29px}
+.portrait .stats{flex-wrap:wrap;gap:14px}
+.portrait .st{min-width:0;flex:1 1 220px}
+.portrait .outro{grid-template-columns:1fr;gap:28px}
+.portrait #tl{left:100px;right:110px;bottom:300px}
+.portrait #tl .seg .lbl{display:none}
+.portrait #scene>*{min-width:0}
+.portrait .win{max-width:100%}
+.portrait .win .body{font-size:18px;overflow:hidden}
+
 /* controls */
 #ctl{position:fixed;right:22px;top:18px;display:flex;gap:8px;z-index:10;opacity:0;transition:opacity .4s}
 body.awake #ctl,body.awake #hint{opacity:1}
@@ -537,7 +553,14 @@ $('st-silent').onclick = () => begin(false);
 let idleT; function wake(){ document.body.classList.add('awake'); clearTimeout(idleT); idleT = setTimeout(()=>document.body.classList.remove('awake'), 2200); }
 addEventListener('mousemove', wake); wake();
 
-function fit(){ const s = Math.min(innerWidth/1600, innerHeight/900); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+function fit(){
+  // portrait when the screen is taller than wide, or forced with ?portrait / ?landscape
+  const qq = new URLSearchParams(location.search);
+  const portrait = qq.has('portrait') || (!qq.has('landscape') && innerHeight > innerWidth * 1.15);
+  document.body.classList.toggle('portrait', portrait);
+  const [W, H] = portrait ? [900, 1600] : [1600, 900];
+  const s = Math.min(innerWidth/W, innerHeight/H); stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+}
 addEventListener('resize', fit); fit();
 
 // ?step=N jumps to a scene · ?paused freezes · ?autoplay skips the start screen (silent) · ?voice autostarts narrated

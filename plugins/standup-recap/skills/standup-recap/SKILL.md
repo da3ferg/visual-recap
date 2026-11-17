@@ -17,9 +17,9 @@ wants to know *what changed, why, and whether it works*, not every file you read
 ## 1. Gather
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 gather                    # today (default)
-npx -y github:da3ferg/visual-recap#v0.3.0 gather --since 2026-11-14
-npx -y github:da3ferg/visual-recap#v0.3.0 gather --session a1b2c3d4
+npx -y github:da3ferg/visual-recap#v0.4.0 gather                    # today (default)
+npx -y github:da3ferg/visual-recap#v0.4.0 gather --since 2026-11-14
+npx -y github:da3ferg/visual-recap#v0.4.0 gather --session a1b2c3d4
 ```
 
 Run it from the project folder. It reads both Claude Code and Codex sessions; add `--source claude`
@@ -135,12 +135,12 @@ Writing for the ear:
 - 15–45 words per scene. The voice sets the pace, so long voiceovers make a long recap.
 - Keep it consistent with what's on screen; the voiceover expands on the slide, it doesn't contradict it.
 
-Check what will be spoken with `npx -y github:da3ferg/visual-recap#v0.3.0 build .standup/recaps/recap.json --print-script`.
+Check what will be spoken with `npx -y github:da3ferg/visual-recap#v0.4.0 build .standup/recaps/recap.json --print-script`.
 
 ## 5. Build and hand it over
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 build .standup/recaps/recap.json
+npx -y github:da3ferg/visual-recap#v0.4.0 build .standup/recaps/recap.json
 ```
 
 It validates the JSON (fix and rerun if it complains) and writes a single HTML file to
@@ -171,8 +171,10 @@ opened in any browser or screen-shared directly.
 If the user wants a video ("as an mp4", "export a video"), export the built HTML:
 
 ```bash
-npx -y github:da3ferg/visual-recap#v0.3.0 export .standup/recaps/<date>-<slug>.html
+npx -y github:da3ferg/visual-recap#v0.4.0 export .standup/recaps/<date>-<slug>.html
 ```
+
+For a vertical video (TikTok, Reels, Shorts, "vertical", "for my phone") add `--portrait`.
 
 It plays the recap in headless Chrome, records it at 1600x900 and lays the embedded voice clips
 over it, writing the `.mp4` next to the HTML. It takes about as long as the recap runs. It needs
