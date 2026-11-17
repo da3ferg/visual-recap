@@ -3,7 +3,8 @@
   "version": "0.3.0",
   "description": "Turns what your coding agent did into an animated, step-by-step standup recap you can present, with real diffs, terminal output and an optional local voice.",
   "author": {
-    "name": "JeVaughn"
+    "name": "JeVaughn Ferguson",
+    "url": "https://github.com/da3ferg"
   },
   "keywords": [
     "standup",
@@ -14,5 +15,10 @@
   ],
   "homepage": "https://github.com/da3ferg/visual-recap",
   "repository": "https://github.com/da3ferg/visual-recap",
-  "license": "MIT"
+  "license": "MIT",
+  "displayName": "Standup Recap",
+  "privacyPolicyUrl": "https://github.com/da3ferg/visual-recap#privacy",
+  "supportUrl": "https://github.com/da3ferg/visual-recap/issues",
+  "documentationUrl": "https://github.com/da3ferg/visual-recap#readme",
+  "termsOfServiceUrl": "https://github.com/da3ferg/visual-recap/blob/main/LICENSE"
 }
