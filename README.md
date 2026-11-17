@@ -25,9 +25,10 @@ The repository holds two things:
 
 - `plugins/standup-recap/`: the plugin itself, plain text only. It is a skill (how the agent turns
   the history into a good story) and a `/standup` command.
-- `packages/visual-recap/`: the [`visual-recap`](https://www.npmjs.com/package/visual-recap) command
-  line tool on npm. It reads the history, builds the player, voices it and exports the MP4. The skill
-  runs it with `npx`, so there is nothing to install by hand.
+- `packages/visual-recap/`: the `visual-recap` command line tool. It reads the history, builds the
+  player, voices it and exports the MP4. The skill runs it straight from this repository with
+  `npx github:da3ferg/visual-recap#v0.3.0`, pinned to a release tag, so there is nothing to install by
+  hand and no npm account involved.
 
 ## Requirements
 
@@ -72,7 +73,7 @@ codex plugin marketplace add da3ferg/visual-recap
 codex plugin add standup-recap@standup-recap-marketplace
 ```
 
-The first recap downloads `visual-recap` from npm, so Codex asks once to allow network access.
+The first recap downloads `visual-recap` from GitHub, so Codex asks once to allow network access.
 
 ### Any agent, with the skills CLI
 
@@ -154,7 +155,7 @@ curl -L -o ~/.standup/voices/voices-v1.0.bin https://github.com/thewh1teagle/kok
 Build the bundled example with the voice and open it:
 
 ```bash
-npx -y visual-recap example ~/standup-demo.json && npx -y visual-recap build ~/standup-demo.json ~/standup-demo.html --tts kokoro && open ~/standup-demo.html
+npx -y github:da3ferg/visual-recap#v0.3.0 example ~/standup-demo.json && npx -y github:da3ferg/visual-recap#v0.3.0 build ~/standup-demo.json ~/standup-demo.html --tts kokoro && open ~/standup-demo.html
 ```
 
 (On Linux use `xdg-open` instead of `open`.)
@@ -186,7 +187,7 @@ and on for each step, the last one for the wrap-up). The plugin's skill only use
 To see exactly what will be spoken before generating anything:
 
 ```bash
-npx -y visual-recap build .standup/recaps/recap.json --print-script
+npx -y github:da3ferg/visual-recap#v0.3.0 build .standup/recaps/recap.json --print-script
 ```
 
 If voice generation fails, the build still finishes and you get a silent recap. The error explains why.
@@ -214,7 +215,7 @@ npm i -g playwright
 ```
 
 ```bash
-npx -y visual-recap export .standup/recaps/<date>-<title>.html
+npx -y github:da3ferg/visual-recap#v0.3.0 export .standup/recaps/<date>-<title>.html
 ```
 
 The MP4 is written next to the HTML. The exporter plays the recap in headless Chrome at 1600x900,
@@ -228,17 +229,17 @@ installed, run `npx playwright install chromium` once.
 `visual-recap` works without any agent:
 
 ```bash
-npx -y visual-recap gather --since 2026-11-14
+npx -y github:da3ferg/visual-recap#v0.3.0 gather --since 2026-11-14
 ```
 
 ```bash
-npx -y visual-recap build .standup/recaps/recap.json out.html --tts kokoro --voice am_michael
+npx -y github:da3ferg/visual-recap#v0.3.0 build .standup/recaps/recap.json out.html --tts kokoro --voice am_michael
 ```
 
 `gather` prints the timeline of this project's Claude Code and Codex sessions (`--source claude` or
 `--source codex` for one of them, `--session <id>` for one session). `build` validates `recap.json`
 first and tells you what is wrong if a step is missing a field. The format is documented in
-`plugins/standup-recap/skills/standup-recap/SKILL.md`, and `npx -y visual-recap example` prints a full
+`plugins/standup-recap/skills/standup-recap/SKILL.md`, and `npx -y github:da3ferg/visual-recap#v0.3.0 example` prints a full
 sample.
 
 ## Troubleshooting
@@ -246,7 +247,7 @@ sample.
 | Problem | Fix |
 |---|---|
 | "No Claude Code or Codex sessions for this project" | The recap only reads sessions started in this folder. Open the agent in the project and try again. |
-| Codex says the `npx` command failed | Allow network access when Codex asks; `npx` downloads `visual-recap` the first time. |
+| Codex says the `npx` command failed | Allow network access when Codex asks; `npx` downloads `visual-recap` from GitHub the first time. |
 | "Python 3.10 to 3.13 is needed for the Kokoro voice" | Install Python 3.13 (see Requirements), then build again. |
 | `pip install kokoro-onnx failed` | Usually a Python that is too new. Install Python 3.13, delete `~/.standup/kokoro-venv`, and build again. On Linux, install `python3-venv` first. |
 | Model download fails or stops | Delete the partial files in `~/.standup/voices/` and build again, or download them with the curl commands above. |
@@ -284,7 +285,8 @@ plugins/standup-recap/               the plugin (text only)
   skills/standup-recap/
     SKILL.md                         how the agent turns the history into a good story
     assets/example-recap.json        a full sample recap
-packages/visual-recap/               the npm package
+package.json                         lets npx run the tool from GitHub
+packages/visual-recap/               the command line tool
   bin/visual-recap.js                gather | build | export | example
   lib/claude-log.js                  reads Claude Code transcripts
   lib/codex-log.js                   reads Codex session files
@@ -293,7 +295,7 @@ packages/visual-recap/               the npm package
   lib/player.html                    the animated player
   lib/kokoro_tts.py                  Kokoro voice → one audio clip per scene
   lib/export.js                      recap HTML → MP4 with the voice
-  test/                              npm test
+  test/                              run with npm test
 ```
 
 ## License
