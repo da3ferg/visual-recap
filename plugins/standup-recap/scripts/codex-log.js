@@ -84,7 +84,9 @@ function execEvents(js, output, cwd) {
       if (!c) continue;
       evs.push(summarizeTool('Bash', { command: strLit(js, at + c.index + c[0].length - 1) }, res[r++], cwd));
     } else if (name === 'apply_patch') {
-      evs.push(...patchEvents(js, cwd));
+      // the patch is usually a string literal argument; otherwise unescape the cell text
+      const q = js.slice(at).match(/^\s*(["'`])/);
+      evs.push(...patchEvents(q ? strLit(js, at + q[0].length - 1) : js.replace(/\\n/g, '\n'), cwd));
     } else if (!['wait', 'write_stdin'].includes(name)) {
       evs.push(...toolEvents(name, {}, null, cwd));
     }
