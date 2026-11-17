@@ -1,6 +1,6 @@
 ---
 name: standup-recap
-description: Turn the work the coding agent just did into an animated, presentable standup recap: a self-contained HTML player that walks through each step (plan, explore, edit, run, test, fix, decision, ship) with motion, real diffs and terminal output. Use whenever the user asks for a standup update, a recap, "what did we do today", "show the team what changed", "walk me through what you did", a demo of the session, or runs /standup, even if they don't say "animation" or "recap".
+description: Turn the work the coding agent just did into an animated, presentable standup recap, a self-contained HTML player that walks through each step (plan, explore, edit, run, test, fix, decision, ship) with motion, real diffs and terminal output. Use whenever the user asks for a standup update, a recap, "what did we do today", "show the team what changed", "walk me through what you did", a demo of the session, or runs /standup, even if they don't say "animation" or "recap".
 ---
 
 # Standup recap
