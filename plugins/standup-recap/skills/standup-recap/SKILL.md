@@ -1,6 +1,6 @@
 ---
 name: standup-recap
-description: Turn the work the coding agent just did into an animated, presentable standup recap — a self-contained HTML player that walks through each step (plan, explore, edit, run, test, fix, decision, ship) with motion, real diffs and terminal output. Use whenever the user asks for a standup update, a recap, "what did we do today", "show the team what changed", "walk me through what you did", a demo of the session, or runs /standup — even if they don't say "animation" or "recap".
+description: Turn the work the coding agent just did into an animated, presentable standup recap: a self-contained HTML player that walks through each step (plan, explore, edit, run, test, fix, decision, ship) with motion, real diffs and terminal output. Use whenever the user asks for a standup update, a recap, "what did we do today", "show the team what changed", "walk me through what you did", a demo of the session, or runs /standup, even if they don't say "animation" or "recap".
 ---
 
 # Standup recap
@@ -12,7 +12,7 @@ history for the current project and prints a compact timeline. Your job is to tu
 animated player.
 
 Think like a developer presenting at standup, not like a log viewer: the audience
-wants to know *what changed, why, and whether it works* — not every file you read.
+wants to know *what changed, why, and whether it works*, not every file you read.
 
 ## 1. Gather
 
@@ -29,7 +29,7 @@ dependencies), so it needs network access once; if a sandbox blocks it, ask the 
 Pick the scope from what the user asked ("this session" → the current session id
 from the most recent turn; "today" → default; "since Friday" → `--since`). If the
 log is empty, say so plainly and offer to build the recap from `git log`/`git diff`
-plus this conversation instead — don't invent steps.
+plus this conversation instead; don't invent steps.
 
 Also look at the actual changes when you need detail for a diff: `git diff`,
 `git diff --stat`, or read the edited file around the change.
@@ -39,13 +39,13 @@ Also look at the actual changes when you need detail for a diff: `git diff`,
 Collapse the timeline into **4–7 steps**. Each step is one *beat* of the work, not one
 tool call. Typical shape:
 
-1. **plan** — what was asked and the approach chosen
-2. **explore** — where the relevant code lives (only if it was non-obvious)
-3. **edit** — the core change (one step per meaningful change, max 2–3)
-4. **run / test** — proving it works
-5. **fix** — if something broke and got fixed, this is the most interesting beat; keep it
-6. **decide** — a real fork in the road where an option was chosen
-7. **ship** — committed / PR opened / deployed
+1. **plan**: what was asked and the approach chosen
+2. **explore**: where the relevant code lives (only if it was non-obvious)
+3. **edit**: the core change (one step per meaningful change, max 2–3)
+4. **run / test**: proving it works
+5. **fix**: if something broke and got fixed, this is the most interesting beat; keep it
+6. **decide**: a real fork in the road where an option was chosen
+7. **ship**: committed / PR opened / deployed
 
 Merge aggressively. 30 Reads + 4 Greps = one explore step. Three edits to the same
 function = one edit step. Drop dead ends unless they taught something.
@@ -54,7 +54,7 @@ function = one edit step. Drop dead ends unless they taught something.
 
 - **title**: what happened, in ≤7 words, active voice. "Moved auth checks into middleware", not "Edit middleware.ts".
 - **narration**: 1–2 sentences, ≤40 words, spoken-style. Say *why*, not just what.
-  Wrap the 1–3 most important words in `*asterisks*` — they render highlighted.
+  Wrap the 1–3 most important words in `*asterisks*`; they render highlighted.
 - Use the team's language: name features and outcomes, not tool names. Never say "I used the Edit tool".
 - Numbers beat adjectives: "cut cold start from 2.1s to 600ms" > "made it faster".
 - Be honest. Failed tests, skipped work and open questions go in the recap (as a `fix`
@@ -67,7 +67,7 @@ Write it to `.standup/recaps/recap.json` (the folder is gitignored). Schema:
 ```json
 {
   "title": "Faster file previews",
-  "summary": "Previews for large PDFs now *stream* instead of waiting for the full download — first page shows in under a second.",
+  "summary": "Previews for large PDFs now *stream* instead of waiting for the full download, so the first page shows in under a second.",
   "date": "Mon Nov 16",
   "author": "Sam + agent",
   "repo": "acme-docs",
@@ -129,7 +129,7 @@ stiff when spoken, so **add a `voiceover` string to any step whose on-screen tex
 wouldn't sound natural read aloud**, plus `"voiceover": {"intro": "...", "outro": "..."}` at the top level if needed.
 
 Writing for the ear:
-- Talk like a teammate at standup: "So the big one today — PDF previews were painfully slow…"
+- Talk like a teammate at standup: "So the big one today: PDF previews were painfully slow…"
 - No file paths, symbols or markup. Say "the PDF preview code", not `src/preview/pdf.ts`; "PR one forty-two", not "#142".
 - Write numbers the way you'd say them: "about eight seconds down to under one".
 - 15–45 words per scene. The voice sets the pace, so long voiceovers make a long recap.

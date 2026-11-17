@@ -74,6 +74,15 @@ codex plugin add standup-recap@standup-recap-marketplace
 
 The first recap downloads `visual-recap` from npm, so Codex asks once to allow network access.
 
+### Any agent, with the skills CLI
+
+```bash
+npx skills add da3ferg/visual-recap
+```
+
+Installs the `standup-recap` skill for Claude Code, Codex, Cursor and the other agents the
+[skills CLI](https://skills.sh) supports.
+
 ### Any other agent
 
 Give the agent `plugins/standup-recap/skills/standup-recap/SKILL.md` as its instructions, or run the
