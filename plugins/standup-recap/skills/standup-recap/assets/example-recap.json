@@ -2,8 +2,8 @@
  "title": "Faster file previews",
  "summary": "Large PDFs now *stream* instead of waiting for the full download, so the first page shows in under a second.",
  "date": "Mon Nov 16",
- "author": "JeVaughn + Claude",
- "repo": "bucketdesk",
+ "author": "Sam + agent",
+ "repo": "acme-docs",
  "branch": "feat/stream-previews",
  "stats": {
   "files": 6,

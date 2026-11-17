@@ -67,8 +67,8 @@ Write it to `.standup/recaps/recap.json` (the folder is gitignored). Schema:
   "title": "Faster file previews",
   "summary": "Previews for large PDFs now *stream* instead of waiting for the full download — first page shows in under a second.",
   "date": "Mon Nov 16",
-  "author": "JeVaughn + Claude",
-  "repo": "bucketdesk",
+  "author": "Sam + agent",
+  "repo": "acme-docs",
   "branch": "feat/stream-previews",
   "stats": { "files": 6, "added": 214, "removed": 58, "commands": 11, "tests": "48 / 48" },
   "steps": [
