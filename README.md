@@ -314,6 +314,10 @@ plugins/standup-recap/
   test/codex-log.test.js           node test/codex-log.test.js
 ```
 
+## License
+
+MIT. See [LICENSE](LICENSE).
+
 ## Credits
 
 Narration uses [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) (Apache-2.0) through

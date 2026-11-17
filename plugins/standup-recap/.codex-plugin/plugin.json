@@ -35,6 +35,8 @@
     ],
     "brandColor": "#7C5CFF",
     "composerIcon": "./assets/icon.png",
-    "logo": "./assets/icon.png"
-  }
+    "logo": "./assets/icon.png",
+    "termsOfServiceURL": "https://github.com/da3ferg/visual-recap/blob/main/LICENSE"
+  },
+  "license": "MIT"
 }

@@ -14,5 +14,6 @@
   ],
   "hooks": "./.claude-plugin/hooks.json",
   "homepage": "https://github.com/da3ferg/visual-recap",
-  "repository": "https://github.com/da3ferg/visual-recap"
+  "repository": "https://github.com/da3ferg/visual-recap",
+  "license": "MIT"
 }
